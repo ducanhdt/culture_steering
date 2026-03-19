@@ -49,7 +49,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         countries_to_use = TARGET_COUNTRIES[:1] 
         test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
         train_data = train_data[:60]
-
+    else:
+        countries_to_use = TARGET_COUNTRIES
     summary_data = {
         "model_name": model_name,
         "target_countries": countries_to_use,
