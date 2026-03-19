@@ -6,8 +6,8 @@ X_AXIS_ID = ["F063", 'Y003', 'F120', 'G006', 'E018']  # Traditional vs Secular-r
 Y_AXIS_ID = ["A008", "A165", "E025", "F118", "Y002"]  # Survival vs Self-expression
 IV_QNS = ["A008", "A165", "E018", "E025", "F063", "F118", "F120", "G006", "Y002", "Y003"]
 
-TARGET_COUNTRIES = ["Vietnam"]
-# TARGET_COUNTRIES = ["Denmark", "Vietnam", "India", "Mexico"]
+# TARGET_COUNTRIES = ["Vietnam"]
+TARGET_COUNTRIES = ["Denmark", "Vietnam", "India", "Mexico"]
 
 # Model Configs
 DEFAULT_MODEL = "Qwen/Qwen3-0.6B"

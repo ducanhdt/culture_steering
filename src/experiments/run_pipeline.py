@@ -25,7 +25,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                          train_path="data/train_data_mtl.json",
                          test_path="data/sample_data_mtl.json",
                          questions_path="data/culture_questions.json",
-                         best_layer_ids=None):
+                         best_layer_ids=None,
+                         test=False):
     
     # 1. Setup
     model_safe_name = model_name.replace("/", "_")
@@ -41,17 +42,23 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     id_to_info = {item["ID"]: item for item in questions}
     
     evaluator = CulturalEvaluator(model_name, id_to_info=id_to_info)
+    
+    # Use only first country if test mode is enabled
+    if test:
+        print("TEST MODE: Using only the first target country for faster execution.")
+        countries_to_use = TARGET_COUNTRIES[:1] 
+        test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
+        train_data = train_data[:60]
+
     summary_data = {
         "model_name": model_name,
-        "target_countries": TARGET_COUNTRIES,
+        "target_countries": countries_to_use,
         "points": [],
         "vectors": [],
         "perplexities": {},
         "layer_diffs": {},
         "domain_shifts": {}
     }
-    test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
-    train_data = train_data[:60]
     
     # --- STEP 1: BASELINE ---
     print("Evaluating Baseline...")
@@ -66,7 +73,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     })
 
     # --- STEP 2: PROMPT STEERING ---
-    # for country in TARGET_COUNTRIES:
+    # for country in countries_to_use:
     #     print(f"[{country}] Running Prompt Interventions...")
     #     # Basic
     #     res_basic = evaluator.evaluate_dataset(test_data, system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
@@ -159,7 +166,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     #     })
 
     # Combined (Adv MLT + Vector)
-    for country in TARGET_COUNTRIES:
+    for country in countries_to_use:
         vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
         vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
         vec_mapping = {
@@ -204,6 +211,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the full evaluation pipeline for cultural steering experiments.")
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, help='Model name or path to use for evaluation')
     parser.add_argument('--best-layers', type=str, default=None, help='Comma-separated list of layer IDs to use (e.g., "1,2,3,4"). If not provided, top 4 layers will be automatically selected.')
+    parser.add_argument('--test', action='store_true', help='Run in test mode with only the first target country')
     args = parser.parse_args()
 
     best_layer_ids = None
@@ -211,6 +219,7 @@ if __name__ == "__main__":
         best_layer_ids = [int(x.strip()) for x in args.best_layers.split(',')]
         
     print(f"Using best layers: {best_layer_ids}" if best_layer_ids else "No best layers provided, will select automatically.")
+    if args.test:
+        print("Running in TEST mode - using only the first target country")
     
-    
-    run_paper_experiments(model_name=args.model, best_layer_ids=best_layer_ids)
+    run_paper_experiments(model_name=args.model, best_layer_ids=best_layer_ids, test=args.test)

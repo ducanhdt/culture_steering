@@ -1,3 +1,10 @@
 *.csv
 *.json
 *.zip
+# ignore temp file pycache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# ignore logs
+logs/
