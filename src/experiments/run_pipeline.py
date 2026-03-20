@@ -46,7 +46,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     # Use only first country if test mode is enabled
     if test:
         print("TEST MODE: Using only the first target country for faster execution.")
-        countries_to_use = TARGET_COUNTRIES[:1] 
+        countries_to_use = TARGET_COUNTRIES[:2] 
         test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
         train_data = train_data[:60]
     else:
@@ -168,6 +168,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
 
     # Combined (Adv MLT + Vector)
     for country in countries_to_use:
+        evaluator.model.reset()
         vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
         vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
         vec_mapping = {
@@ -188,6 +189,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                     'label': f'vector_{country}_{vec_name}_{coeff}', 'color': 'green',
                     'begin_point_label': f'Baseline'
                 })
+                save_summary(output_dir, summary_data)
                 
 
     # Domain Shifts (Baseline vs Steered)
