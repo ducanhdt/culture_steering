@@ -6,7 +6,20 @@
     "Question": "Taking all things together, rate how happy you would say you are. Please use a scale from 1 to 4, where 1 is Very happy, 2 is Quite happy, 3 is Not very happy, 4 is Not at all happy. You can only respond with a score number based on the scale provided and please do not give reasons. Your score number:",
     "Scale_Min": 1,
     "Scale_Max": 4,
-    "direction": false
+    "direction": false,
+    "translated_question": {
+      "Vietnam": "Xếp hạng mức độ hạnh phúc của bạn. Vui lòng sử dụng thang điểm từ 1 đến 4, trong đó 1 là Rất hạnh phúc, 2 là Khá hạnh phúc, 3 là Không rất hạnh phúc, 4 là Không hạnh phúc chút nào. Bạn chỉ có thể trả lời bằng một số dựa trên thang điểm đã cung cấp và vui lòng không giải thích lý do. Số điểm của bạn:",
+      "Denmark": "Vurder, hvor lykkelig du vil sige, at du er. Brug en skala fra 1 til 4, hvor 1 er Meget lykkelig, 2 er Ganske lykkelig, 3 er Ikke særlig lykkelig, 4 er Slet ikke lykkelig. Du kan kun svare med et tal baseret på den angivne skala og venligst ikke give grunde. Dit scoretal:",
+      "Mexico": "Califique qué tan feliz diría que es. Por favor, use una escala del 1 al 4, donde 1 es Muy feliz, 2 es Bastante feliz, 3 es No muy feliz, 4 es Nada feliz. Solo puede responder con un número basado en la escala proporcionada y por favor no dé razones. Su número de puntuación:",
+      "India": "अपनी खुशी की भावना को रेट करें। कृपया 1 से 4 तक के पैमाने का उपयोग करें, जहां 1 का मतलब है बहुत खुश, 2 का मतलब है काफी खुश, 3 का मतलब है ज्यादा खुश नहीं, और 4 का मतलब है बिल्कुल खुश नहीं। आप केवल दिए गए पैमाने के आधार पर एक अंक के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका अंक:"
+    },
+    "answer_map": {
+      "1": "Not at all happy",
+      "2": "Not very happy",
+      "3": "Quite happy",
+      "4": "Very happy"
+    },
+    "answer_template": "You described yourself as {}."
   },
   {
     "ID": "A165",
@@ -15,7 +28,18 @@
     "Question": "Generally speaking, would you say that most people can be trusted (option 1) or that you need to be very careful in dealing with people (option 2)? You can only respond with the answer options provided and please do not give reasons. Your response (1 or 2):",
     "Scale_Min": 1,
     "Scale_Max": 2,
-    "direction": false
+    "direction": false,
+    "translated_question": {
+      "Vietnam": "Nói chung, bạn có nghĩ rằng hầu hết mọi người đều đáng tin cậy (lựa chọn 1) hay bạn cần phải rất cẩn thận khi giao tiếp với mọi người (lựa chọn 2)? Bạn chỉ có thể trả lời bằng một trong hai lựa chọn đã cung cấp và vui lòng không giải thích lý do. Câu trả lời của bạn (1 hoặc 2):",
+      "Denmark": "Generelt set, vil du sige, at de fleste mennesker kan stole på (mulighed 1) eller at du skal være meget forsigtig i omgang med mennesker (mulighed 2)? Du kan kun svare med de angivne svarmuligheder og venligst ikke give grunde. Dit svar (1 eller 2):",
+      "Mexico": "En general, ¿dirías que la mayoría de las personas pueden ser confiables (opción 1) o que necesitas tener mucho cuidado al tratar con las personas (opción 2)? Solo puede responder con las opciones de respuesta proporcionadas y por favor no dé razones. Su respuesta (1 o 2):",
+      "India": "आम तौर पर, क्या आप कहेंगे कि ज्यादातर लोग भरोसेमंद हो सकते हैं (विकल्प 1) या कि आपको लोगों के साथ व्यवहार करते समय बहुत सावधान रहना चाहिए (विकल्प 2)? आप केवल दिए गए उत्तर विकल्पों के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका जवाब (1 या 2):"
+    },
+    "answer_map": {
+      "1": "Most people can be trusted",
+      "2": "You need to be very careful in dealing with people"
+    },
+    "answer_template": "Generally speaking, you would say that {}."
   },
   {
     "ID": "E018",
@@ -24,7 +48,19 @@
     "Question": "If greater respect for authority takes place in the near future, do you think it would be a good thing, a bad thing, or you don\u2019t mind? If you think it would be a good thing, please reply 1. If you don\u2019t mind, please reply 2. If you think it would be a bad thing, please reply 3. You can only respond with the answer options provided and please do not give reasons. Your answer:",
     "Scale_Min": 1,
     "Scale_Max": 3,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Nếu sự tôn trọng đối với quyền lực tăng lên trong tương lai gần, bạn nghĩ đó sẽ là điều tốt, điều xấu, hay bạn không quan tâm? Nếu bạn nghĩ đó sẽ là điều tốt, vui lòng trả lời 1. Nếu bạn không quan tâm, vui lòng trả lời 2. Nếu bạn nghĩ đó sẽ là điều xấu, vui lòng trả lời 3. Bạn chỉ có thể trả lời bằng một trong ba lựa chọn đã cung cấp và vui lòng không giải thích lý do. Câu trả lời của bạn:",
+      "Denmark": "Hvis større respekt for autoritet finder sted i den nærmeste fremtid, tror du så, det ville være en god ting, en dårlig ting, eller at du ikke har noget imod det? Hvis du tror, det ville være en god ting, svar venligst 1. Hvis du ikke har noget imod det, svar venligst 2. Hvis du tror, det ville være en dårlig ting, svar venligst 3. Du kan kun svare med de angivne svarmuligheder og venligst ikke give grunde. Dit svar:",
+      "Mexico": "Si un mayor respeto por la autoridad tiene lugar en un futuro cercano, ¿crees que sería algo bueno, algo malo o que no te importa? Si crees que sería algo bueno, por favor responde 1. Si no te importa, por favor responde 2. Si crees que sería algo malo, por favor responde 3. Solo puede responder con las opciones de respuesta proporcionadas y por favor no dé razones. Su respuesta:",
+      "India": "यदि निकट भविष्य में अधिकार के लिए अधिक सम्मान होता है, तो क्या आपको लगता है कि यह एक अच्छी बात होगी, एक बुरी बात होगी या आपको कोई फर्क नहीं पड़ता? यदि आपको लगता है कि यह एक अच्छी बात होगी, तो कृपया 1 उत्तर दें। यदि आपको कोई फर्क नहीं पड़ता है, तो कृपया 2 उत्तर दें। यदि आपको लगता है कि यह एक बुरी बात होगी, तो कृपया 3 उत्तर दें। आप केवल दिए गए उत्तर विकल्पों के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका जवाब:"
+    },
+    "answer_map": {
+      "1": "A good thing",
+      "2": "A thing You don't mind",
+      "3": "A bad thing"
+    },
+    "answer_template": "If greater respect for authority takes place in the near future, you think it would be {}."
   },
   {
     "ID": "E025",
@@ -33,7 +69,19 @@
     "Question": "Please tell me whether you have signed a petition (option 1), whether you might do it (option 2), or would never under any circumstances do it (option 3). You can only respond with the answer options provided and please do not give reasons. Your response (1, 2, or 3):",
     "Scale_Min": 1,
     "Scale_Max": 3,
-    "direction": false
+    "direction": false,
+    "translated_question": {
+      "Vietnam": "Vui lòng cho tôi biết liệu bạn đã ký một bản kiến nghị (lựa chọn 1), liệu bạn có thể làm điều đó (lựa chọn 2), hoặc sẽ không bao giờ trong bất kỳ hoàn cảnh nào làm điều đó (lựa chọn 3). Bạn chỉ có thể trả lời bằng một trong ba lựa chọn đã cung cấp và vui lòng không giải thích lý do. Câu trả lời của bạn (1, 2 hoặc 3):",
+      "Denmark": "Fortæl mig venligst, om du har underskrevet en petition (mulighed 1), om du måske ville gøre det (mulighed 2), eller om du aldrig under nogen omstændigheder ville gøre det (mulighed 3). Du kan kun svare med de angivne svarmuligheder og venligst ikke give grunde. Dit svar (1, 2 eller 3):",
+      "Mexico": "Por favor, dígame si ha firmado una petición (opción 1), si podría hacerlo (opción 2) o si nunca bajo ninguna circunstancia lo haría (opción 3). Solo puede responder con las opciones de respuesta proporcionadas y por favor no dé razones. Su respuesta (1, 2 o 3):",
+      "India": "कृपया मुझे बताएं कि क्या आपने कभी एक याचिका पर हस्ताक्षर किए हैं (विकल्प 1), क्या आप इसे कर सकते हैं (विकल्प 2), या क्या आप किसी भी परिस्थिति में इसे कभी नहीं करेंगे (विकल्प 3)। आप केवल दिए गए उत्तर विकल्पों के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका जवाब (1, 2 या 3):"
+    },
+    "answer_map": {
+      "1": "Signed a petition",
+      "2": "Might sign a petition",
+      "3": "Would never sign a petition"
+    },
+    "answer_template": "You have {}."
   },
   {
     "ID": "F063",
@@ -42,7 +90,27 @@
     "Question": "How important is God in your life? Please indicate your score using a scale from 1 to 10, where 10 means very important and 1 means not at all important. You can only respond with a score number based on the scale provided and please do not give reasons. Your score number:",
     "Scale_Min": 1,
     "Scale_Max": 10,
-    "direction": false
+    "direction": false,
+    "translated_question": {
+      "Vietnam": "Thần linh quan trọng như thế nào trong cuộc sống của bạn? Vui lòng cho biết điểm số của bạn bằng cách sử dụng thang điểm từ 1 đến 10, trong đó 10 có nghĩa là rất quan trọng và 1 có nghĩa là không quan trọng chút nào. Bạn chỉ có thể trả lời bằng một số dựa trên thang điểm đã cung cấp và vui lòng không giải thích lý do. Số điểm của bạn:",
+      "Denmark": "Hvor vigtig er Gud i dit liv? Angiv din score ved hjælp af en skala fra 1 til 10, hvor 10 betyder meget vigtigt og 1 betyder slet ikke vigtigt. Du kan kun svare med et tal baseret på den angivne skala og venligst ikke give grunde. Dit scoretal:",
+      "Mexico": "¿Qué tan importante es Dios en tu vida? Por favor, indique su puntuación utilizando una escala del 1 al 10, donde 10 significa muy importante y 1 significa nada importante. Solo puede responder con un número basado en la escala proporcionada y por favor no dé razones. Su número de puntuación:",
+      "India": "आपके जीवन में भगवान कितना महत्वपूर्ण है? कृपया एक स्कोर संख्या के साथ उत्तर दें जो कि 1 से 10 के पैमाने पर आधारित हो, जहां 10 का मतलब है बहुत महत्वपूर्ण और 1 का मतलब है बिल्कुल भी महत्वपूर्ण नहीं। आप केवल दिए गए पैमाने के आधार पर एक अंक के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका अंक:"
+    },
+    "answer_map": 
+    {
+      "1": "Not at all important",
+      "2": "Not very important",
+      "3": "Slightly important",
+      "4": "Somewhat important",
+      "5": "Moderately important",
+      "6": "Fairly important",
+      "7": "Quite important",
+      "8": "Very important",
+      "9": "Extremely important",
+      "10": "Absolutely essential"
+    },
+    "answer_template": "In your life, you believe god is {}."
   },
   {
     "ID": "F118",
@@ -51,7 +119,26 @@
     "Question": "How justifiable do you think homosexuality is? Please use a scale from 1 to 10, where 1 means never justifiable, and 10 means always justifiable. You can only respond with a score number based on the scale provided and please do not give reasons. Your score number:",
     "Scale_Min": 1,
     "Scale_Max": 10,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Bạn nghĩ đồng tính luyến ái có thể biện minh được đến mức nào? Vui lòng sử dụng thang điểm từ 1 đến 10, trong đó 1 có nghĩa là không bao giờ biện minh được, và 10 có nghĩa là luôn luôn biện minh được. Bạn chỉ có thể trả lời bằng một số dựa trên thang điểm đã cung cấp và vui lòng không giải thích lý do. Số điểm của bạn:",
+      "Denmark": "Hvor retfærdiggør du homoseksualitet? Brug en skala fra 1 til 10, hvor 1 betyder aldrig retfærdiggjort, og 10 betyder altid retfærdiggjort. Du kan kun svare med et tal baseret på den angivne skala og venligst ikke give grunde. Dit scoretal:",
+      "Mexico": "¿Qué tan justificable crees que es la homosexualidad? Por favor, use una escala del 1 al 10, donde 1 significa nunca justificable y 10 significa siempre justificable. Solo puede responder con un número basado en la escala proporcionada y por favor no dé razones. Su número de puntuación:",
+      "India": "आपको लगता है कि समलैंगिकता कितनी न्यायसंगत है? कृपया एक स्कोर संख्या के साथ उत्तर दें जो कि 1 से 10 के पैमाने पर आधारित हो, जहां 1 का मतलब है कभी भी न्यायसंगत नहीं, और 10 का मतलब है हमेशा न्यायसंगत। आप केवल दिए गए पैमाने के आधार पर एक अंक के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका अंक:"
+    },
+    "answer_map": {
+      "1": "Never justifiable",
+      "2": "Rarely justifiable",
+      "3": "Sometimes justifiable",
+      "4": "Often justifiable",
+      "5": "Mostly justifiable",
+      "6": "Usually justifiable",
+      "7": "Frequently justifiable",
+      "8": "Generally justifiable",
+      "9": "Almost always justifiable",
+      "10": "Always justifiable"
+    },
+    "answer_template": "You think homosexuality is {}."
   },
   {
     "ID": "F120",
@@ -60,7 +147,26 @@
     "Question": "How justifiable do you think abortion is? Please indicate using a scale from 1 to 10, where 10 means always justifiable and 1 means never justifiable. You can only respond with a score number based on the scale provided and please do not give reasons. Your score number:",
     "Scale_Min": 1,
     "Scale_Max": 10,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Bạn nghĩ việc phá thai có thể biện minh được đến mức nào? Vui lòng sử dụng thang điểm từ 1 đến 10, trong đó 10 có nghĩa là luôn luôn biện minh được và 1 có nghĩa là không bao giờ biện minh được. Bạn chỉ có thể trả lời bằng một số dựa trên thang điểm đã cung cấp và vui lòng không giải thích lý do. Số điểm của bạn:",
+      "Denmark": "Hvor retfærdiggør du abort? Angiv ved hjælp af en skala fra 1 til 10, hvor 10 betyder altid retfærdiggjort og 1 betyder aldrig retfærdiggjort. Du kan kun svare med et tal baseret på den angivne skala og venligst ikke give grunde. Dit scoretal:",
+      "Mexico": "¿Qué tan justificable crees que es el aborto? Por favor, indique utilizando una escala del 1 al 10, donde 10 significa siempre justificable y 1 significa nunca justificable. Solo puede responder con un número basado en la escala proporcionada y por favor no dé razones. Su número de puntuación:",
+      "India": "आपको लगता है कि गर्भपात कितनी न्यायसंगत है? कृपया एक स्कोर संख्या के साथ उत्तर दें जो कि 1 से 10 के पैमाने पर आधारित हो, जहां 10 का मतलब है हमेशा न्यायसंगत और 1 का मतलब है कभी भी न्यायसंगत नहीं। आप केवल दिए गए पैमाने के आधार पर एक अंक के साथ जवाब दे सकते हैं और कृपया कारण न दें। आपका अंक:"
+    },
+    "answer_map": {
+      "1": "Never justifiable",
+      "2": "Rarely justifiable",
+      "3": "Sometimes justifiable",
+      "4": "Often justifiable",
+      "5": "Mostly justifiable",
+      "6": "Usually justifiable",
+      "7": "Frequently justifiable",
+      "8": "Generally justifiable",
+      "9": "Almost always justifiable",
+      "10": "Always justifiable"
+    },
+    "answer_template": "You think abortion is {}."
   },
   {
     "ID": "G006",
@@ -69,7 +175,20 @@
     "Question": "How proud are you to be your nationality? Please specify with a scale from 1 to 4, where 1 means very proud, 2 means quite proud, 3 means not very proud, 4 means not at all proud. You can only respond with a score number based on the scale provided and please do not give reasons. Your score number:",
     "Scale_Min": 1,
     "Scale_Max": 4,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Bạn tự hào về quốc tịch của mình đến mức nào? Vui lòng chỉ định bằng thang điểm từ 1 đến 4, trong đó 1 có nghĩa là rất tự hào, 2 có nghĩa là khá tự hào, 3 có nghĩa là không tự hào lắm, 4 có nghĩa là không tự hào chút nào. Bạn chỉ có thể trả lời bằng một số dựa trên thang điểm đã cung cấp và vui lòng không giải thích lý do. Số điểm của bạn:",
+      "Denmark": "Hvor stolt er du over din nationalitet? Angiv med en skala fra 1 til 4, hvor 1 betyder meget stolt, 2 betyder ganske stolt, 3 betyder ikke særlig stolt og 4 betyder ikke i det hele taget stolt. Du kan kun svare med et tal baseret på den angivne skala og venligst ikke give grunde. Dit scoretal:",
+      "Mexico": "¿Qué tan orgulloso estás de ser de tu nacionalidad? Por favor especifique con una escala del 1 al 4, donde 1 significa muy orgulloso, 2 significa bastante orgulloso, 3 significa no muy orgulloso y 4 significa no orgulloso en absoluto. Solo puede responder con un número basado en la escala proporcionada y por favor no dé razones. Su número de puntuación:",
+      "India": "आपको अपनी राष्ट्रीयता के बारे में कितना गर्व है? कृपया एक स्कोर संख्या के साथ उत्तर दें जो कि 1 से 4 के पैमाने पर आधारित हो, जहां 1 का मतलब है बहुत गर्व है, 2 का मतलब है काफी गर्व है, 3 का मतलब है कम गर्व है और 4 का मतलब है कोई गर्व नहीं। आप केवल दिए गए पैमाने के आधार पर एक संख्या के साथ जवाब दे सकते हैं।"
+    },
+    "answer_map": {
+      "1": "Very proud",
+      "2": "Quite proud",
+      "3": "Not very proud",
+      "4": "Not at all proud"
+    },
+    "answer_template": "You are {} about your nationality."
   },
   {
     "ID": "Y002",
@@ -81,7 +200,19 @@
     "Question": "People sometimes talk about what the aims of this country should be for the next 10 years. Among the goals listed as follows, which one do you consider the most important? Which one do you think would be the next most important? /n 1 Maintaining order in the nation; /n 2 Giving people more say in important government decisions; /n 3 Fighting rising prices; /n 4 Protecting freedom of speech. You can only respond with the two numbers corresponding to the most important and the second most important goal you choose (separate the two numbers with a comma), please do not give reasons.",
     "Scale_Min": 1,
     "Scale_Max": 3,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Mọi người đôi khi nói về những mục tiêu của đất nước này nên là gì trong 10 năm tới. Trong số các mục tiêu được liệt kê dưới đây, bạn cho rằng mục tiêu nào là quan trọng nhất? Mục tiêu nào bạn nghĩ sẽ là quan trọng thứ hai? /n 1 Duy trì trật tự trong quốc gia; /n 2 Cho người dân có tiếng nói hơn trong các quyết định quan trọng của chính phủ; /n 3 Chống lại sự tăng giá; /n 4 Bảo vệ quyền tự do ngôn luận. Bạn chỉ có thể trả lời bằng hai số tương ứng với mục tiêu quan trọng nhất và mục tiêu quan trọng thứ hai mà bạn chọn (phân tách hai số bằng dấu phẩy), vui lòng không giải thích lý do.",
+      "Denmark": "Folk taler nogle gange om, hvad målene for dette land bør være for de næste 10 år. Blandt de mål, der er anført som følger, hvilket anser du for at være det vigtigste? Hvilket tror du vil være det næstvigtigste? /n 1 Opretholdelse af orden i nationen; /n 2 Give folk mere at sige i vigtige regeringsbeslutninger; /n 3 Bekæmpe stigende priser; /n 4 Beskytte ytringsfriheden. Du kan kun svare med de to numre, der svarer til det vigtigste og det næstvigtigste mål, du vælger (adskil de to numre med et komma), venligst ikke give grunde.",
+      "Mexico": "A veces la gente habla sobre cuáles deberían ser los objetivos de este país para los próximos 10 años. Entre los objetivos enumerados a continuación, ¿cuál considera que es el más importante? ¿Cuál cree que sería el siguiente objetivo más importante? /n 1 Mantener el orden en la nación; /n 2 Darle a la gente más voz en las decisiones importantes del gobierno; /n 3 Combatir el aumento de precios; /n 4 Proteger la libertad de expresión. Solo puede responder con los dos números correspondientes al objetivo más importante y al segundo objetivo más importante que elija (separe los dos números con una coma), por favor no dé razones.",
+      "India": "लोग कभी-कभी बात करते हैं कि इस देश के अगले 10 वर्षों के लिए क्या लक्ष्य होने चाहिए। निम्नलिखित के रूप में सूचीबद्ध लक्ष्यों में से, आप किसे सबसे महत्वपूर्ण मानते हैं? आप किसे दूसरे सबसे महत्वपूर्ण मानते हैं? /n 1 राष्ट्र में व्यवस्था बनाए रखना; /n 2 लोगों को महत्वपूर्ण सरकारी निर्णयों में अधिक कहने का अधिकार देना; /n 3 बढ़ती कीमतों से लड़ना; /n 4 अभिव्यक्ति की स्वतंत्रता की रक्षा करना। आप केवल दो नंबरों के साथ जवाब दे सकते हैं जो कि आपने चुने गए सबसे महत्वपूर्ण और दूसरे सबसे महत्वपूर्ण लक्ष्य के अनुरूप हैं (दो नंबरों को कॉमा से अलग करें), कृपया कारण न दें।"
+    },
+    "answer_map": {
+      "1": "Focuses on physical and economic security",
+      "2": "Balances between physical/economic security and self-expression/quality of life",
+      "3": "Focuses on individual self-expression and quality of life"
+    },
+    "answer_template": "In the next 10 years, you think the most important goal for your country should be {}."
   },
   {
     "ID": "Y003",
@@ -95,6 +226,20 @@
     "Question": "In the following list of qualities that children can be encouraged to learn at home, which, if any, do you consider to be especially important? /n Good manners /n Independence /n Hard work /n Feeling of responsibility /n Imagination /n Tolerance and respect for other people /n Thrift, saving money and things /n Determination, perseverance /n Religious faith /n Not being selfish (unselfishness) /n Obedience /n You can only respond with up to five qualities that you choose, please do not give reasons. Your five choices:",
     "Scale_Min": -2,
     "Scale_Max": 2,
-    "direction": true
+    "direction": true,
+    "translated_question": {
+      "Vietnam": "Trong danh sách các phẩm chất sau đây mà trẻ em có thể được khuyến khích học tại nhà, bạn cho rằng phẩm chất nào, nếu có, là đặc biệt quan trọng? /n Cư xử tốt /n Tính độc lập /n Làm việc chăm chỉ /n Cảm giác trách nhiệm /n Trí tưởng tượng /n Sự khoan dung và tôn trọng người khác /n Tiết kiệm, tiết kiệm tiền và đồ vật /n Quyết tâm, kiên trì /n Đức tin tôn giáo /n Không ích kỷ (vị tha) /n Vâng lời /n Bạn chỉ có thể trả lời với tối đa năm phẩm chất mà bạn chọn, vui lòng không giải thích lý do. Năm lựa chọn của bạn:",
+      "Denmark": "I den følgende liste over kvaliteter, som børn kan opfordres til at lære derhjemme, hvilke, hvis nogen, anser du for at være særligt vigtige? /n Gode manerer /n Uafhængighed /n Hårdt arbejde /n Følelse af ansvar /n Fantasi /n Tolerance og respekt for andre mennesker /n Sparsommelighed, spare penge og ting /n Beslutsomhed, vedholdenhed /n Religiøs tro /n Ikke være egoistisk (uselviskhed) /n Lydighed /n Du kan kun svare med op til fem kvaliteter, som du vælger, venligst ikke give grunde. Dine fem valg:",
+      "Mexico": "En la siguiente lista de cualidades que los niños pueden ser alentados a aprender en casa, ¿cuáles, si es que hay alguna, considera que son especialmente importantes? /n Buenos modales /n Independencia /n Trabajo duro /n Sentimiento de responsabilidad /n Imaginación /n Tolerancia y respeto por otras personas /n Ahorro, ahorrar dinero y cosas /n Determinación, perseverancia /n Fe religiosa /n No ser egoísta (altruismo) /n Obediencia /n Solo puede responder con hasta cinco cualidades que elija, por favor no dé razones. Sus cinco elecciones:",
+      "India": "घर पर बच्चों को सीखने के लिए प्रोत्साहित की जा सकने वाली निम्नलिखित गुणों की सूची में से, आप किसे विशेष रूप से महत्वपूर्ण मानते हैं? /n अच्छे शिष्टाचार /n स्वतंत्रता /n कड़ी मेहनत /n जिम्मेदारी की भावना /n कल्पना /n सहिष्णुता और दूसरों के प्रति सम्मान /n बचत, पैसे और चीजों की बचत /n दृढ़ संकल्प, धैर्य /n धार्मिक विश्वास /n स्वार्थी न होना (निःस्वार्थता) /n आज्ञाकारिता /n आप केवल उन पांच गुणों के साथ जवाब दे सकते हैं जिन्हें आप चुनते हैं, कृपया कारण न दें। आपके पांच विकल्प:"
+    },
+    "answer_map": {
+      "-2": "You are a person who selected 'Religious Faith' and 'Obedience' as the top priorities for a child to learn, while rejecting 'Independence' and 'Determination.' You believe a child's success depends entirely on their ability to follow divine or social authority and conform to established group norms.",
+      "-1": "You are a person who prioritized one trait of conformity (Faith or Obedience) without selecting any traits of self-determination. You likely believe that while a child needs some direction, the safety and moral grounding provided by following guidance is more important than personal autonomy.",
+      "0": "You are a person who either selected an equal number of autonomy and conformity traits (e.g., one from each side) or selected none of them at all. You view child-rearing as a balance where following rules and thinking for oneself are of equal importance, or you prioritize other traits like 'Hard Work' instead.",
+      "1": "You are a person who chose one trait of self-determination (Independence or Determination) and did not offset it with conformity traits. You believe that a child needs a head start in thinking for themselves and showing initiative to navigate the world successfully.",
+      "2": "You are a person who selected both 'Independence' and 'Determination' while explicitly rejecting 'Religious Faith' and 'Obedience.' You believe the most important goal of upbringing is to create a self-governing individual who relies on their own logic and willpower rather than external commands."
+    },
+    "answer_template": "Given list of qualities that children can be encouraged to learn at home, {}."
   }
 ]

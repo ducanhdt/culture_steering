@@ -169,18 +169,18 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     # Combined (Adv MLT + Vector)
     for country in countries_to_use:
         evaluator.model.reset()
-        vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
-        vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
+        vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country])
+        vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country])
         vec_mapping = {
-            'vec_x_basic': vec_x_basic,
-            'vec_y_basic': vec_y_basic,
-            'vec_x': vec_x,
-            'vec_y': vec_y,
+            'vec_x_advance': vec_x_basic,
+            'vec_y_advance': vec_y_basic,
+            'vec_x+advance': vec_x,
+            'vec_y+advance': vec_y,
         }
         for vec_name, vec in vec_mapping.items():
             for coeff in [0.2, -0.2]:
                 print(f"[{country}] Combined (Basic + Vector)..."+ f"Vector: {vec_name}, Coeff: {coeff}")
-                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country), 
+                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], 
                                                 steering_vector=vec, coeff=coeff)
                 save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}", res_comb)
                 s_comb = evaluator.aggregate_cultural_scores(res_comb, analyzer=analyzer)

@@ -167,16 +167,32 @@ def get_probability(prompt, model, tokenizer):
 # 		entry['normalized_score'] = (score - scale_min) / (scale_max - scale_min)
 # 	return scenarios
 
-def evaluate_scenarios_new(scenarios, model, tokenizer, system_prompt= ""):
-
+def evaluate_scenarios(scenarios, model, tokenizer, system_prompt= "", language=None):
+	question = {
+		'Vietnam': 'Bạn chọn gì? Lựa chọn (A hay B):',
+		'India': 'आप क्या चुनते हैं? विकल्प (A या B):',
+		'Mexico': '¿Qué eliges? Opción (A o B):',
+		'Denmark': 'Hvad vælger du? Valg (A eller B):'
+	}
+	
 	for entry in tqdm(scenarios, desc="Evaluating Scenarios"):
 		# We now include the option descriptions in the prompt
+		
+		if language is None:
+			scenario_text = entry['scenario_text']
+			option_A = entry['options']['A']
+			option_B = entry['options']['B']
+		else:
+			scenario_text = entry['scenario_text_mlt'][language]
+			option_A = entry['options_mlt'][language]['A']
+			option_B = entry['options_mlt'][language]['B']
+
 		prompt = (
 			f"{system_prompt}\n"
-			f"{entry['scenario_text']}\n"
-			f"A) {entry['options']['A']}\n"
-			f"B) {entry['options']['B']}\n\n"
-			f"Which do you choose? Choice (A or B):"
+			f"{scenario_text}\n"
+			f"A) {option_A}\n"
+			f"B) {option_B}\n\n"
+			f"{question[language] if language and language in question else 'Which do you choose? Choice (A or B):'}"
 		)
 		prob_A, prob_B = get_probability(prompt, model, tokenizer)
 
@@ -205,7 +221,38 @@ def evaluate_scenarios_new(scenarios, model, tokenizer, system_prompt= ""):
 		entry['normalized_score'] = (score - scale_min) / (scale_max - scale_min)
 	return copy.deepcopy(scenarios)
 
+def caculate_perplexity(scenarios, model, tokenizer, system_prompt= "", language=None):
+	perplexities = []
+	for entry in tqdm(scenarios, desc="Calculating Perplexity"):
+		if language is None:
+			scenario_text = entry['scenario_text']
+			option_A = entry['options']['A']
+			option_B = entry['options']['B']
+		else:
+			scenario_text = entry['scenario_text_mlt'][language]
+			option_A = entry['options_mlt'][language]['A']
+			option_B = entry['options_mlt'][language]['B']
 
+		prompt = (
+			f"{system_prompt}\n"
+			f"{scenario_text}\n"
+			f"A) {option_A}\n"
+			f"B) {option_B}\n\n"
+			f"{question[language] if language and language in question else 'Which do you choose? Choice (A or B):'}"
+		)
+		inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+		with torch.no_grad():
+			outputs = model(**inputs)
+			logits = outputs.logits
+			shift_logits = logits[..., :-1, :].contiguous()
+			shift_labels = inputs["input_ids"][..., 1:].contiguous()
+			loss_fn = torch.nn.CrossEntropyLoss()
+			loss = loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+			perplexity = torch.exp(loss).item()
+			perplexities.append(perplexity)
+			generated_text = tokenizer.decode(inputs["input_ids"][0], skip_special_tokens=True)
+			print(f"Prompt:\n{generated_text}\nPerplexity: {perplexity}\n")
+	return perplexities
 # def answer_to_pivot(evaluation_results):
 # 	df = pd.DataFrame(evaluation_results)
 # 	mean_scores = df.pivot_table(index='domain', columns='wvs_id', values='human_aligned_score', aggfunc='mean')
@@ -266,6 +313,7 @@ def load_direct_profile_data(file_path, model_name="unknown model"):
 			Q154 = int(answers[0].strip())
 			Q155 = int(answers[1].strip())
 		except ValueError:
+			print(f"Error parsing Y002 answers: {row['Y002']}")
 			return -5
 		if Q154 < 0 or Q155 < 0:
 			return -5
@@ -278,11 +326,30 @@ def load_direct_profile_data(file_path, model_name="unknown model"):
 	def Y003_from_answers(row):
 		qualities = row['Y003']
 		try:
-			Q8 = 1 if 'Good manners' in qualities else 0
-			Q14 = 1 if 'Independence' in qualities else 0
-			Q15 = 1 if 'Hard work' in qualities else 0
-			Q17 = 1 if 'Feeling of responsibility' in qualities else 0
+			Q8 = 1 if   'Good manners' in qualities or \
+						'Cư xử tốt' in qualities or  \
+						'Gode manerer' in qualities  or \
+						'Buenos modales' in qualities or \
+						'अच्छे शिष्टाचार' in qualities else 0
+			Q14 = 1 if  'Independence' in qualities or \
+						   'Tính độc lập' in qualities or \
+						 'Uafhængighed' in qualities or \
+						 'Independencia' in qualities or \
+						 'स्वतंत्रता' in qualities else 0
+					  
+			Q15 = 1 if  'Hard work' in qualities or \
+						'Làm việc chăm chỉ' in qualities or\
+						  'Trabajo duro' in qualities or\
+						'Hårdt arbejde' in qualities or\
+						  'Trabajo duro' in qualities or\
+						'कड़ी मेहनत' in qualities else 0
+			Q17 = 1 if 'Feeling of responsibility' in qualities or \
+						'Cảm giác có trách nhiệm' in qualities or \
+						'Følelse af ansvar' in qualities or \
+						'Sentimiento de responsabilidad' in qualities or \
+						'जिम्मेदारी की भावना' in qualities else 0
 		except ValueError:
+			print(f"Error parsing Y003 answers: {qualities}")
 			return -5
 		if Q15 >= 0 and Q17 >= 0 and Q8 >= 0 and Q14 >= 0:
 			return (Q15 + Q17) - (Q8 + Q14)
@@ -294,6 +361,7 @@ def load_direct_profile_data(file_path, model_name="unknown model"):
 		if match:
 			return int(match.group(1))
 		else:
+			print(f"Error parsing answer: {answer}")
 			# return none to be filtered out later
 			return None
 	if isinstance(file_path, str):
@@ -365,11 +433,11 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import numpy as np
 
-def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=None, title=None, legend=True ):
+def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=None, title=None, legend=True, x_lim=(-1.5, 4.0), y_lim=(-1.5, 3.2), add_texts=True):
 	# 1. Handle Axes Logic
 	is_standalone = ax is None
 	if is_standalone:
-		fig, ax = plt.subplots(figsize=(10, 8))
+		fig, ax = plt.subplots(figsize=(8, 6))
 	
 	# 2. Setup Colors
 	colors = ["#000000", "#E69F00", "#56B4E9", "#009E73", "#CC79A7", "#0072B2", "#D55E00", "#F0E442"]
@@ -381,17 +449,20 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 		data = pca_result_country_level[pca_result_country_level['Category'] == category]
 		ax.scatter(data['RC1_final'], data['RC2_final'], 
 				   c=category_colors.get(category, '#000000'), label=category, alpha=0.7)
-
-	texts = []
-	for _, row in pca_result_country_level.iterrows():
-		texts.append(ax.text(row['RC1_final'], row['RC2_final'], row['country.territory'], fontsize=8))
+	if add_texts:
+		texts = []
+		for _, row in pca_result_country_level.iterrows():
+			if x_lim[0] <= row['RC1_final'] <= x_lim[1] and y_lim[0] <= row['RC2_final'] <= y_lim[1]:
+				texts.append(ax.text(row['RC1_final'], row['RC2_final'], row['country.territory'], fontsize=10))
 
 	# 4. Plot Additional Points (X markers)
 	if additional_points_df is not None:
 		for _, row in additional_points_df.iterrows():
 			color = row.get('color', 'red')
-			ax.scatter(row['RC1'], row['RC2'], c=color, marker='X', s=100, zorder=5)
-			texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=9, fontweight='bold'))
+			ax.scatter(row['RC1'], row['RC2'], c=color, marker='X', s=150, zorder=5)
+			if add_texts:
+				if x_lim[0] <= row['RC1'] <= x_lim[1] and y_lim[0] <= row['RC2'] <= y_lim[1]:
+					texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=10, color=color))
 
 	# 5. Plot Vectors (Arrows)
 	if additional_vectors_df is not None and additional_points_df is not None:
@@ -403,39 +474,39 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 				begin_x = begin_row['RC1'].values[0]
 				begin_y = begin_row['RC2'].values[0]
 				color = row.get('color', 'blue')
-				
 				ax.arrow(begin_x, begin_y, row['RC1']-begin_x, row['RC2']-begin_y, 
-						 head_width=0.08, head_length=0.08, fc=color, ec=color, 
-						 length_includes_head=True, alpha=0.8)
-				texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=8, color=color))
-
+						head_width=0.08, head_length=0.08, fc=color, ec=color, 
+						length_includes_head=True, alpha=0.8)
+				if add_texts and x_lim[0] <= row['RC1'] <= x_lim[1] and y_lim[0] <= row['RC2'] <= y_lim[1]:
+					texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=10, color=color))
 	# 6. Adjust Text to prevent overlap
-	adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
 
 	# 7. Formatting
 	if title:
 		ax.set_title(title)
 	ax.set_xlabel('Survival vs. Self-Expression Values')
 	ax.set_ylabel('Traditional vs. Secular Values')
-	ax.set_xticks(np.arange(-1.5, 4.0, 0.5))
-	ax.set_yticks(np.arange(-1.5, 3.0, 0.5))
-	ax.set_xlim(-1.5, 4.0)
-	ax.set_ylim(-1.5, 3.2)
-	if legend:
-		# add legend upper center
-		ax.legend(loc='upper center',  ncol=4, fontsize='small')
-		# ax.legend(loc='upper center', bbox_to_anchor=(1, 1), ncol=4, fontsize='small')
-		# ax.legend(loc='upper center', bbox_to_anchor=(1, 1), fontsize='small')
+	ax.set_xticks(np.arange(x_lim[0], x_lim[1], 0.5))
+	ax.set_yticks(np.arange(y_lim[0], y_lim[1], 0.5))
+	ax.set_xlim(x_lim)
+	ax.set_ylim(y_lim)
   
 	if legend:
 		handles, labels = ax.get_legend_handles_labels()
 		# Create a proxy artist for the vector (an arrow-like line)
 		if additional_vectors_df is not None:
+			# color_mapping = {
+			# 'orange': 'Advanced Prompt Steering',
+			# 'purple': 'Basic Prompt Steering',
+			# 'cyan': 'New Advanced Prompt Steering',
+			# 'blue': 'Vector Steering',
+			# }
 			color_mapping = {
-			'orange': 'Advanced Prompt Steering',
-			'purple': 'Basic Prompt Steering',
-			'blue': 'Vector Steering',
-			}
+				'orange': 'Basic + vector',
+				'purple': 'Basic Prompt Steering',
+				'cyan': 'Basic + new vector',
+				'blue': 'Vector Steering',
+				}
 			# get unique colors in additional_vectors_df
 			color_set = set(additional_vectors_df['color'].tolist())
 			for color, label in color_mapping.items():
@@ -447,7 +518,10 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 					handles.append(vector_line)
 					labels.append(label) 
 
-		ax.legend(handles=handles, labels=labels, loc='upper center', ncol=5, fontsize='small')
+		ax.legend(handles=handles, labels=labels, ncol=1, fontsize='small', loc='upper right')
+		# ax.legend(handles=handles, labels=labels, loc='upper center', ncol=5, fontsize='medium')
+	if add_texts:
+		adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
 	ax.spines['top'].set_visible(False)
 	ax.spines['right'].set_visible(False)
 	
@@ -455,3 +529,16 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 	if is_standalone:
 		plt.tight_layout()
 		plt.show()
+
+
+def filter(data, id_list=None, domain_list=None):
+	filtered_data = []
+	for sample in data:
+		if id_list is not None:
+			if sample['wvs_id'] not in id_list:
+				continue
+		if domain_list is not None:
+			if sample['domain'] not in domain_list:
+				continue
+		filtered_data.append(sample)
+	return filtered_data
