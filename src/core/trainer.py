@@ -1,8 +1,10 @@
 
+import gc
+import torch
 from dialz import Dataset, SteeringVector
 from src.core.config import X_AXIS_ID, Y_AXIS_ID
 
-def train_cultural_vector(model, train_data, axis='X', system_prompt=""):
+def train_cultural_vector(model, train_data, axis='X', system_prompt="", batch_size=8):
     """
     Trains a steering vector based on X or Y axis items in train_data.
     """
@@ -19,6 +21,15 @@ def train_cultural_vector(model, train_data, axis='X', system_prompt=""):
         
         # Dialz expects pairs: (negative, positive)
         dataset.add_entry(f"{system_prompt} \n{situation} Answer: {low_pole}", f"{system_prompt} \n{situation} Answer: {high_pole}")
+
+    if len(dataset.entries) == 0:
+        raise ValueError(f"No training samples found for axis {axis}.")
         
-    steering_vector = SteeringVector.train(model, dataset, method="mean_diff")
+    steering_vector = SteeringVector.train(model, dataset, method="mean_diff", batch_size=batch_size)
+
+    # Keep long runs stable when vectors are trained repeatedly.
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
     return steering_vector

@@ -4,6 +4,7 @@ import torch
 import numpy as np
 import pandas as pd
 import copy
+import gc
 from tqdm import tqdm
 from transformers import AutoTokenizer
 from dialz import SteeringModel, SteeringVector
@@ -21,6 +22,12 @@ class CulturalEvaluator:
             self.tokenizer.pad_token = self.tokenizer.eos_token
         self.model.to(DEVICE)
         self.id_to_info = id_to_info
+
+    def _cleanup_memory(self, force=False):
+        """Release Python refs and ask CUDA allocator to drop cached blocks."""
+        gc.collect()
+        if DEVICE == "cuda" and force:
+            torch.cuda.empty_cache()
 
     def evaluate_dataset(self, dataset, system_prompt="", steering_vector=None, coeff=0.1, language=None, batch_size=1):
         """
@@ -56,14 +63,19 @@ class CulturalEvaluator:
             batch_prompts = prompts[i:i + batch_size]
             inputs = self.tokenizer(batch_prompts, return_tensors="pt", padding=True).to(DEVICE)
             
-            with torch.no_grad():
+            with torch.inference_mode():
                 outputs = self.model(**inputs)
                 logits = outputs.logits[:, -1, :] # [Batch, Vocab]
                 
                 choice_logits = logits[:, [token_id_A, token_id_B]]
                 probs = torch.nn.functional.softmax(choice_logits, dim=-1)
-                all_probs_A.extend(probs[:, 0].tolist())
-                all_probs_B.extend(probs[:, 1].tolist())
+                probs_cpu = probs.detach().cpu()
+                all_probs_A.extend(probs_cpu[:, 0].tolist())
+                all_probs_B.extend(probs_cpu[:, 1].tolist())
+
+            del inputs, outputs, logits, choice_logits, probs, probs_cpu
+            if DEVICE == "cuda" and ((i // batch_size + 1) % 32 == 0):
+                self._cleanup_memory(force=True)
 
         results = copy.deepcopy(dataset)
         for idx, res in enumerate(results):
@@ -89,6 +101,8 @@ class CulturalEvaluator:
             })
             res["choice"] = "Traditional" if choose_low_pole else "Secular-Rational" if res['dimension'] == "Traditional vs. Secular-Rational Values" else "Survival" if choose_low_pole else "Self-Expression"
             
+        self.model.reset()
+        self._cleanup_memory(force=True)
         return results
 
     def get_domain_pivot(self, results, value_col='normalized_score'):
@@ -153,9 +167,12 @@ class CulturalEvaluator:
                     layer_differentials[q_id] = {}
                 layer_differentials[q_id][layer_id] = diff
 
+            self._cleanup_memory(force=DEVICE == "cuda")
+
         # Restore full layer list
         self.model.layer_ids = self.layer_ids
         self.model.reset()
+        self._cleanup_memory(force=True)
         return layer_differentials
 
     def calculate_perplexity(self, dataset, system_prompt="", steering_vector=None, coeff=0.1, language=None):
@@ -188,7 +205,7 @@ class CulturalEvaluator:
             )
             
             inputs = self.tokenizer(prompt, return_tensors="pt").to(DEVICE)
-            with torch.no_grad():
+            with torch.inference_mode():
                 outputs = self.model(**inputs)
                 logits = outputs.logits
                 shift_logits = logits[..., :-1, :].contiguous()
@@ -198,5 +215,11 @@ class CulturalEvaluator:
                 loss = loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
                 perplexity = torch.exp(loss).item()
                 perplexities.append(perplexity)
+
+            del inputs, outputs, logits, shift_logits, shift_labels, loss, loss_fn
+            if DEVICE == "cuda":
+                self._cleanup_memory(force=True)
                 
+        self.model.reset()
+        self._cleanup_memory(force=True)
         return np.mean(perplexities)

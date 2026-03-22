@@ -3,6 +3,8 @@ import json
 import os
 import pandas as pd
 import numpy as np
+import gc
+import torch
 from src.core.evaluator import CulturalEvaluator
 from src.core.trainer import train_cultural_vector
 from src.core.config import (
@@ -20,6 +22,11 @@ def save_detailed(output_dir, name, results):
     os.makedirs(details_dir, exist_ok=True)
     with open(f"{details_dir}/{name}.json", "w") as f:
         json.dump(results, f, indent=4)
+
+def release_memory(force=False):
+    gc.collect()
+    if force and torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 def run_paper_experiments(model_name=DEFAULT_MODEL,
                          train_path="data/train_data_mtl.json",
@@ -72,6 +79,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         'label': 'Baseline', 
         'color': 'red'
     })
+    release_memory(force=True)
 
     # --- STEP 2: PROMPT STEERING ---
     # for country in countries_to_use:
@@ -105,9 +113,10 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
 
     # --- STEP 3: VECTOR STEERING ---
     print("Training Steering Vectors...")
-    vec_x = train_cultural_vector(evaluator.model, train_data, axis='X')
-    vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y')
+    vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
+    vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
     combined_vector = vec_x + vec_y
+    release_memory(force=True)
     
     
     # Selection of top layers for subsequent evaluation
@@ -169,8 +178,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     # Combined (Adv MLT + Vector)
     for country in countries_to_use:
         evaluator.model.reset()
-        vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country])
-        vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country])
+        vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
         vec_mapping = {
             'vec_x_advance': vec_x_basic,
             'vec_y_advance': vec_y_basic,
@@ -190,6 +199,11 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                     'begin_point_label': f'Baseline'
                 })
                 save_summary(output_dir, summary_data)
+                del res_comb, s_comb
+                release_memory(force=True)
+
+        del vec_x_basic, vec_y_basic, vec_mapping
+        release_memory(force=True)
                 
 
     # Domain Shifts (Baseline vs Steered)
@@ -206,6 +220,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     #     summary_data["perplexities"][str(c)] = float(ppl)
 
     save_summary(output_dir, summary_data)
+    release_memory(force=True)
     print(f"All evaluation results saved to {output_dir}")
 
 if __name__ == "__main__":
