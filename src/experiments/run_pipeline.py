@@ -33,6 +33,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                          test_path="data/sample_data_mtl.json",
                          questions_path="data/culture_questions.json",
                          best_layer_ids=None,
+                         coeffs=[0.2, -0.2],
                          test=False):
     
     # 1. Setup
@@ -141,7 +142,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     print("Evaluating Global Vector Steering...")
     
     # Steer X and Y separately
-    # for coeff in [0.2, -0.2]:
+    # for coeff in coeffs:
     #     res_vec_x = evaluator.evaluate_dataset(test_data, steering_vector=vec_x, coeff=coeff)
     #     save_detailed(output_dir, f"vector_x_{coeff}", res_vec_x)
     #     scores_vec_x = evaluator.aggregate_cultural_scores(res_vec_x, analyzer=analyzer)
@@ -187,7 +188,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
             'vec_y+advance': vec_y,
         }
         for vec_name, vec in vec_mapping.items():
-            for coeff in [0.2, -0.2]:
+            for coeff in coeffs:
                 print(f"[{country}] Combined (Basic + Vector)..."+ f"Vector: {vec_name}, Coeff: {coeff}")
                 res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], 
                                                 steering_vector=vec, coeff=coeff)
@@ -229,6 +230,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the full evaluation pipeline for cultural steering experiments.")
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, help='Model name or path to use for evaluation')
     parser.add_argument('--best-layers', type=str, default=None, help='Comma-separated list of layer IDs to use (e.g., "1,2,3,4"). If not provided, top 4 layers will be automatically selected.')
+    parser.add_argument('--coeffs', type=str, default="0.2, -0.2", help='Comma-separated list of steering coefficients (e.g., "0.2,-0.2")')
     parser.add_argument('--test', action='store_true', help='Run in test mode with only the first target country')
     args = parser.parse_args()
 
@@ -236,8 +238,11 @@ if __name__ == "__main__":
     if args.best_layers:
         best_layer_ids = [int(x.strip()) for x in args.best_layers.split(',')]
         
+    coeffs = [float(x.strip()) for x in args.coeffs.split(',')]
+        
     print(f"Using best layers: {best_layer_ids}" if best_layer_ids else "No best layers provided, will select automatically.")
+    print(f"Using steering coefficients: {coeffs}")
     if args.test:
         print("Running in TEST mode - using only the first target country")
     
-    run_paper_experiments(model_name=args.model, best_layer_ids=best_layer_ids, test=args.test)
+    run_paper_experiments(model_name=args.model, best_layer_ids=best_layer_ids, coeffs=coeffs, test=args.test)
