@@ -83,7 +83,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     release_memory(force=True)
 
     # --- STEP 2: PROMPT STEERING ---
-    # for country in countries_to_use:
+    for country in countries_to_use:
     #     print(f"[{country}] Running Prompt Interventions...")
     #     # Basic
     #     res_basic = evaluator.evaluate_dataset(test_data, system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
@@ -103,15 +103,21 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     #         'label': f'Adv (EN): {country}', 'color': 'orange'
     #     })
         
-    #     # Adv (MLT)
-    #     res_adv = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], language=country)
-    #     save_detailed(output_dir, f"adv_mlt_{country}", res_adv)
-    #     s_adv = evaluator.aggregate_cultural_scores(res_adv, analyzer=analyzer)
-    #     summary_data["points"].append({
-    #         'RC1': float(s_adv['X_Axis']), 'RC2': float(s_adv['Y_Axis']), 
-    #         'label': f'Adv (MLT): {country}', 'color': 'orange'
-    #     })
-
+        # Adv (MLT)
+        print(f"[{country}] Running Baseline Prompt (MLT)...")
+        res_adv = evaluator.evaluate_dataset(test_data, language=country)
+        save_detailed(output_dir, f"baseline_mlt_{country}", res_adv)
+        print(f"[{country}] Running Advanced Prompt (MLT)...")
+        res_adv = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], language=country)
+        save_detailed(output_dir, f"adv_mlt_{country}", res_adv)
+        
+        
+        
+        s_adv = evaluator.aggregate_cultural_scores(res_adv, analyzer=analyzer)
+        summary_data["points"].append({
+            'RC1': float(s_adv['X_Axis']), 'RC2': float(s_adv['Y_Axis']), 
+            'label': f'Adv (MLT): {country}', 'color': 'orange'
+        })
     # --- STEP 3: VECTOR STEERING ---
     print("Training Steering Vectors...")
     vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
@@ -179,20 +185,28 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     # Combined (Adv MLT + Vector)
     for country in countries_to_use:
         evaluator.model.reset()
-        vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
-        vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        # vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        # vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        vec_x_advance_mlt = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS_MLT[country], batch_size=8, language=country)
+        vec_y_advance_mlt = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS_MLT[country], batch_size=8, language=country)
+        vec_x_mlt = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8, language=country)
+        vec_y_mlt = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8, language=country)
         vec_mapping = {
-            'vec_x_advance': vec_x_basic,
-            'vec_y_advance': vec_y_basic,
-            'vec_x+advance': vec_x,
-            'vec_y+advance': vec_y,
+            # 'vec_x_advance': vec_x_basic,
+            # 'vec_y_advance': vec_y_basic,
+            # 'vec_x+advance': vec_x,
+            # 'vec_y+advance': vec_y,
+            'vec_x+advance_mlt': vec_x_mlt,
+            'vec_y+advance_mlt': vec_y_mlt,
+            'vec_x_advance_mlt': vec_x_advance_mlt,
+            'vec_y_advance_mlt': vec_y_advance_mlt
         }
         for vec_name, vec in vec_mapping.items():
             for coeff in coeffs:
                 print(f"[{country}] Combined (Basic + Vector)..."+ f"Vector: {vec_name}, Coeff: {coeff}")
-                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], 
-                                                steering_vector=vec, coeff=coeff)
-                save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}", res_comb)
+                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
+                                                steering_vector=vec, coeff=coeff, language=country)
+                save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}_mlt", res_comb)
                 s_comb = evaluator.aggregate_cultural_scores(res_comb, analyzer=analyzer)
                 summary_data["vectors"].append({
                     'RC1': float(s_comb['X_Axis']), 'RC2': float(s_comb['Y_Axis']), 
@@ -203,7 +217,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                 del res_comb, s_comb
                 release_memory(force=True)
 
-        del vec_x_basic, vec_y_basic, vec_mapping
+        del vec_x_advance_mlt, vec_y_advance_mlt, vec_mapping
+        # del vec_x_basic, vec_y_basic, vec_mapping
         release_memory(force=True)
                 
 
