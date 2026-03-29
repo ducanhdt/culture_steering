@@ -140,6 +140,57 @@ def _label_token_ids(tokenizer, num_choices):
     return ids
 
 
+def _stratified_sample_by_cultural_label(dataset, max_samples, seed=42):
+    """
+    Stratified sampling: allocate 1/3 of max_samples to CS, 1/3 to CA, 
+    and 1/3 to other cultural_sensitivity_label values.
+    """
+    np.random.seed(seed)
+    
+    if max_samples is None or len(dataset) <= max_samples:
+        return dataset
+    
+    # Group indices by cultural_sensitivity_label
+    label_to_indices = {}
+    for idx, example in enumerate(dataset):
+        label = example.get("cultural_sensitivity_label", "unknown")
+        
+        if label not in label_to_indices:
+            label_to_indices[label] = []
+        label_to_indices[label].append(idx)
+    
+    # Calculate allocation: 1/3 CS, 1/3 CA, 1/3 others
+    samples_per_group = max_samples // 3
+    
+    selected_indices = []
+    
+    # Sample from CS
+    if "CS" in label_to_indices:
+        cs_indices = label_to_indices["CS"]
+        selected_count = min(samples_per_group, len(cs_indices))
+        selected_indices.extend(np.random.choice(cs_indices, selected_count, replace=False).tolist())
+    
+    # Sample from CA
+    if "CA" in label_to_indices:
+        ca_indices = label_to_indices["CA"]
+        selected_count = min(samples_per_group, len(ca_indices))
+        selected_indices.extend(np.random.choice(ca_indices, selected_count, replace=False).tolist())
+    
+    # Sample from other labels
+    other_indices = []
+    for label, indices in label_to_indices.items():
+        if label not in ["CS", "CA"]:
+            other_indices.extend(indices)
+    
+    if other_indices:
+        selected_count = min(max_samples - len(selected_indices), len(other_indices))
+        selected_indices.extend(np.random.choice(other_indices, selected_count, replace=False).tolist())
+    
+    # Sort indices to maintain dataset order
+    selected_indices = sorted(selected_indices)
+    return dataset.select(selected_indices)
+
+
 def _build_steering_vector(evaluator, steering_mode, steering_train_path, vector_prompt):
     mode = steering_mode.lower()
     if mode == "none":
@@ -295,7 +346,8 @@ def benchmark_global_mmlu(
         dataset = dataset.filter(lambda example: _is_language_selected(_extract_global_mmlu_language(example)))
 
     if max_samples is not None:
-        dataset = dataset.select(range(min(max_samples, len(dataset))))
+        print(f"Applying stratified sampling: max_samples={max_samples}")
+        dataset = _stratified_sample_by_cultural_label(dataset, max_samples)
 
     total = 0
     correct = 0
@@ -428,7 +480,7 @@ if __name__ == "__main__":
     configs = [
         {"name": "basic_prompt", "system_prompt": 'basic', "steering_mode": 'none', "steering_coeff": 0.0},
         {"name": "advance_prompt", "system_prompt": 'advance', "steering_mode": 'none', "steering_coeff": 0.0},
-        # {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_mode": 'x', "steering_coeff": 0.2},
+        {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_mode": 'x', "steering_coeff": 0.2},
         {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2},
         {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True},
         # {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
