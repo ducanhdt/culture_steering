@@ -431,9 +431,9 @@ if __name__ == "__main__":
         # {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_mode": 'x', "steering_coeff": 0.2},
         {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2},
         {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True},
-        {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
-        {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
-        {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "mlt": True},
+        # {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        # {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        # {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "mlt": True},
         # {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True, "mlt": True},
     ]
 
