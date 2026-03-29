@@ -109,7 +109,7 @@ def _build_prompt(question, choices, system_prompt=""):
     labels = [chr(ord("A") + i) for i in range(len(choices))]
 
     lines = []
-    if system_prompt.strip():
+    if system_prompt and system_prompt.strip():
         lines.append(system_prompt.strip())
         lines.append("")
 
@@ -198,6 +198,8 @@ def benchmark_global_mmlu(
     steering_vector_prompt="",
     languages=None,
     target_country=None,
+    best_layers=None,
+    config_name="default",
 ):
     try:
         from datasets import load_dataset
@@ -206,67 +208,87 @@ def benchmark_global_mmlu(
             "Global MMLU benchmark requires the datasets package. Install with: pip install datasets"
         ) from exc
 
-    if system_prompt in ["basic", "advance"]:
-        system_prompt_full = ADVANCE_PROMPTS[country] if args.system_prompt == "advance" else BASIC_PROMPT_TEMPLATE.format(country=country)
+    if system_prompt == "basic":
+        system_prompt_full = BASIC_PROMPT_TEMPLATE.format(country=target_country)
+    elif system_prompt == "advance":
+        system_prompt_full = ADVANCE_PROMPTS[target_country]
+    elif system_prompt == "advance_mlt":
+        system_prompt_full = ADVANCE_PROMPTS_MLT[target_country]
     else:
         system_prompt_full = system_prompt
 
-    if steering_vector_prompt in ["basic", "advance"]:
-        vector_prompt_full = ADVANCE_PROMPTS_MLT[country] if args.steering_vector_prompt == "advance" else BASIC_PROMPT_TEMPLATE.format(country=country)
+    if steering_vector_prompt == "basic":
+        vector_prompt_full = BASIC_PROMPT_TEMPLATE.format(country=target_country)
+    elif steering_vector_prompt == "advance":
+        vector_prompt_full = ADVANCE_PROMPTS[target_country]
+    elif steering_vector_prompt == "advance_mlt":
+        vector_prompt_full = ADVANCE_PROMPTS_MLT[target_country]
     else:
         vector_prompt_full = steering_vector_prompt
 
-
-
-
+    model_safe_name = model_name.replace("/", "_")
+    
+    
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(f"{output_dir}/{model_safe_name}", exist_ok=True)
 
     evaluator = CulturalEvaluator(model_name)
 
-    print("Preparing steering vector...")
+    print(f"Preparing steering vector for mode {steering_mode}...")
     steering_vector = _build_steering_vector(
         evaluator,
         steering_mode=steering_mode,
         steering_train_path=steering_train_path,
         vector_prompt=vector_prompt_full,
     )
-
+    
+    layer_ids = []
+    if best_layers:
+        if isinstance(best_layers, str):
+            layer_ids = [int(x.strip()) for x in best_layers.split(',') if x.strip()]
+        elif isinstance(best_layers, list):
+            layer_ids = best_layers
+            
     evaluator.model.reset()
+    if layer_ids:
+        evaluator.model.layer_ids = layer_ids
+        
     if steering_vector is not None:
         evaluator.model.set_control(steering_vector, steering_coeff)
 
     # Convert languages to set for faster lookup; default to English
     if languages:
         selected_languages = {lang.strip().lower() for lang in languages if lang and lang.strip()}
-        if not selected_languages:
-            selected_languages = {"en", "english"}  # Default to English if empty
     else:
-        selected_languages = {"en", "english"}  # Default to English when None
+        selected_languages = {"en"}
 
     def _is_language_selected(lang_value):
         lang_norm = str(lang_value).strip().lower()
         if lang_norm in selected_languages:
             return True
-
-        # Treat common English variants (e.g., en-US, en_GB) as English.
         if ("en" in selected_languages or "english" in selected_languages) and (
             lang_norm.startswith("en") or "english" in lang_norm
         ):
             return True
-
         return False
 
-    # Convert selected languages to config name for dataset loading
-    # Global MMLU uses language codes like 'en' as configuration
+    # Try to load the specific language config if only one language is selected
     lang_config = None
-    if "en" in selected_languages or "english" in selected_languages:
-        lang_config = "en"  # Download English subset directly
-    
+    if len(selected_languages) == 1:
+        lang_code = list(selected_languages)[0]
+        # Common mapping for Global MMLU
+        if lang_code in ["en", "vi", "hi", "es", "da", "fr", "de", "zh", "ar", "ru", "pt", "it", "ja", "ko"]:
+            lang_config = lang_code
+
     if lang_config:
         print(f"Loading dataset: {dataset_name} [config={lang_config}, split=test]")
-        dataset = load_dataset(dataset_name, name=lang_config, split="test")
+        try:
+            dataset = load_dataset(dataset_name, name=lang_config, split="test")
+        except Exception as e:
+            print(f"Failed to load language config {lang_config}, falling back to default and filtering. Error: {e}")
+            dataset = load_dataset(dataset_name, split="test")
+            dataset = dataset.filter(lambda example: _is_language_selected(_extract_global_mmlu_language(example)))
     else:
-        # Fallback if language config not available
         print(f"Loading dataset: {dataset_name} [split=test]")
         dataset = load_dataset(dataset_name, split="test")
         print(f"Filtering dataset by languages: {selected_languages}")
@@ -291,9 +313,9 @@ def benchmark_global_mmlu(
                 subject = _extract_global_mmlu_subject(example)
                 language = _extract_global_mmlu_language(example)
                 cultural_label = _extract_global_mmlu_cultural_sensitivity_label(example)
-            except Exception:
+            except Exception as e:
                 skipped += 1
-                print(f"Skipping example due to extraction error: {example}")
+                # print(f"Skipping example due to extraction error: {e}")
                 continue
 
             prompt = _build_prompt(question, choices, system_prompt=system_prompt_full)
@@ -329,6 +351,8 @@ def benchmark_global_mmlu(
             if DEVICE == "cuda" and total % 64 == 0:
                 torch.cuda.empty_cache()
 
+    accuracy = (correct / total) if total else 0.0
+    
     by_subject_accuracy = {
         key: (val["correct"] / val["total"] if val["total"] else 0.0, val["total"])
         for key, val in by_subject.items()
@@ -343,12 +367,14 @@ def benchmark_global_mmlu(
     }
 
     results = {
+        "config_name": config_name,
         "model_name": model_name,
+        "target_country": target_country,
         "dataset_name": dataset_name,
         "split": "test",
         "num_evaluated": total,
         "num_skipped": skipped,
-        "accuracy": (correct / total) if total else 0.0,
+        "accuracy": accuracy,
         "languages_filter": sorted(selected_languages) if selected_languages else None,
         "system_prompt":    system_prompt_full,
         "steering": {
@@ -362,17 +388,14 @@ def benchmark_global_mmlu(
         "by_cultural_sensitivity_accuracy": by_cultural_sensitivity_accuracy,
     }
 
-    model_safe_name = model_name.replace("/", "_")
-    mode_safe = steering_mode.lower()
     output_path = os.path.join(
-        output_dir,
-        f"global_mmlu_{model_safe_name}_{mode_safe}_{steering_coeff}_{lang_config}_{system_prompt}_{steering_vector_prompt}_{selected_languages}_{target_country}.json",
+        output_dir, model_safe_name,
+        f"mmlu_{config_name}_{target_country}.json",
     )
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
 
-    print(f"Global MMLU benchmark complete. Accuracy: {results['accuracy']:.4f}")
-    print(f"Saved results to: {output_path}")
+    print(f"Global MMLU complete: {config_name} | {target_country} | Acc: {accuracy:.4f}")
 
     evaluator.model.reset()
     del evaluator, steering_vector
@@ -388,71 +411,91 @@ if __name__ == "__main__":
 
     parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="Model name or path")
     parser.add_argument("--dataset", type=str, default="CohereForAI/Global-MMLU", help="Hugging Face dataset name")
-
     parser.add_argument("--max-samples", type=int, default=None, help="Optional cap on number of evaluated samples")
     parser.add_argument("--output-dir", type=str, default="outputs/global_mmlu", help="Output directory")
-    parser.add_argument(
-        "--languages",
-        type=str,
-        default="en",
-        help="Comma-separated language subset to evaluate (e.g. 'en,fr,sw').",
-    )
-
-    parser.add_argument("--system-prompt", type=str, default="", help="System prompt prepended to every MMLU item")
-
-    parser.add_argument(
-        "--steering-mode",
-        type=str,
-        default="none",
-        choices=["none", "x", "y", "xy"],
-        help="Steering vector to apply during MMLU evaluation",
-    )
-    parser.add_argument("--steering-coeff", type=float, default=0.0, help="Steering coefficient")
-    parser.add_argument(
-        "--steering-train-path",
-        type=str,
-        default="data/train_data_mtl.json",
-        help="Training file used to construct steering vectors",
-    )
-    parser.add_argument(
-        "--steering-vector-prompt",
-        type=str,
-        default="",
-        help="Optional prompt used when constructing steering vectors",
-    )
+    parser.add_argument("--best-layers", type=str, default=None, help="Comma-separated list of layer IDs to use")
+    parser.add_argument("--test", action="store_true", help="Run in test mode (fewer samples/countries)")
 
     args = parser.parse_args()
 
-    languages = None
-    if args.languages:
-        languages = [lang.strip() for lang in args.languages.split(",") if lang.strip()]
+    COUNTRY_TO_LANG = {
+        "Denmark": "en",
+        "Vietnam": "vi",
+        "India": "hi",
+        "Mexico": "es"
+    }
 
-    if args.system_prompt in ["basic", "advance"] or args.steering_vector_prompt in ["basic", "advance"]:
-        for country in TARGET_COUNTRIES:
+    configs = [
+        {"name": "basic_prompt", "system_prompt": 'basic', "steering_mode": 'none', "steering_coeff": 0.0},
+        {"name": "advance_prompt", "system_prompt": 'advance', "steering_mode": 'none', "steering_coeff": 0.0},
+        # {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_mode": 'x', "steering_coeff": 0.2},
+        # {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2},
+        # {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True},
+        # {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        # {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "mlt": True},
+        # {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True, "mlt": True},
+    ]
 
-            benchmark_global_mmlu(
+    countries = TARGET_COUNTRIES
+    if args.test:
+        countries = TARGET_COUNTRIES[:1]
+        args.max_samples = args.max_samples or 20
+
+    all_results = []
+    default_res = benchmark_global_mmlu(
+        model_name=args.model,
+        dataset_name=args.dataset,
+        max_samples=args.max_samples,
+        output_dir=args.output_dir,
+        config_name="default")
+    all_results.append(default_res)
+    for config in configs:
+        for country in countries:
+            print(f"\n--- Running Config: {config['name']} | Country: {country} ---")
+            
+            languages = ["en"]
+            if config.get("mlt"):
+                languages = [COUNTRY_TO_LANG.get(country, "en")]
+
+            vector_prompt = ""
+            if config.get("vector_sp"):
+                vector_prompt = config.get("system_prompt", "")
+            
+            res = benchmark_global_mmlu(
                 model_name=args.model,
                 dataset_name=args.dataset,
                 max_samples=args.max_samples,
                 output_dir=args.output_dir,
-                system_prompt=args.system_prompt,
-                steering_mode=args.steering_mode,
-                steering_coeff=args.steering_coeff,
-                steering_train_path=args.steering_train_path,
-                steering_vector_prompt=args.steering_vector_prompt,
+                system_prompt=config.get("system_prompt", ""),
+                steering_mode=config.get("steering_mode", "none"),
+                steering_coeff=config.get("steering_coeff", 0.0),
+                steering_vector_prompt=vector_prompt,
                 languages=languages,
-                target_country=country
+                target_country=country,
+                best_layers=args.best_layers,
+                config_name=config["name"],
             )
-    else:
-        benchmark_global_mmlu(
-            model_name=args.model,
-            dataset_name=args.dataset,
-            max_samples=args.max_samples,
-            output_dir=args.output_dir,
-            system_prompt=args.system_prompt,
-            steering_mode=args.steering_mode,
-            steering_coeff=args.steering_coeff,
-            steering_train_path=args.steering_train_path,
-            steering_vector_prompt=args.steering_vector_prompt,
-            languages=languages,
-        )
+            all_results.append(res)
+
+    # Generate Summary CSV
+    if all_results:
+        import pandas as pd
+        summary_rows = []
+        for res in all_results:
+            row = {
+                "config": res["config_name"],
+                "country": res["target_country"],
+                "total_accuracy": res["accuracy"],
+                "num_evaluated": res["num_evaluated"]
+            }
+            # Flatten by_cultural_sensitivity_accuracy
+            for label, (acc, count) in res["by_cultural_sensitivity_accuracy"].items():
+                row[f"culture_{label}_acc"] = acc
+                row[f"culture_{label}_count"] = count
+            summary_rows.append(row)
+        
+        df = pd.DataFrame(summary_rows)
+        csv_path = os.path.join(args.output_dir, "global_mmlu_summary.csv")
+        df.to_csv(csv_path, index=False)
+        print(f"\nSummary CSV saved to: {csv_path}")
