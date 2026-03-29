@@ -429,10 +429,10 @@ if __name__ == "__main__":
         {"name": "basic_prompt", "system_prompt": 'basic', "steering_mode": 'none', "steering_coeff": 0.0},
         {"name": "advance_prompt", "system_prompt": 'advance', "steering_mode": 'none', "steering_coeff": 0.0},
         # {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_mode": 'x', "steering_coeff": 0.2},
-        # {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2},
-        # {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True},
-        # {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
-        # {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2},
+        {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True},
+        {'name': "baseline_mlt", "system_prompt": None, "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
+        {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'none', "steering_coeff": 0.0, "mlt": True},
         {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "mlt": True},
         # {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_mode": 'x', "steering_coeff": 0.2, "vector_sp": True, "mlt": True},
     ]
@@ -494,8 +494,8 @@ if __name__ == "__main__":
                 row[f"culture_{label}_acc"] = acc
                 row[f"culture_{label}_count"] = count
             summary_rows.append(row)
-        
+        model_safe_name = args.model.replace("/", "_")
         df = pd.DataFrame(summary_rows)
-        csv_path = os.path.join(args.output_dir, "global_mmlu_summary.csv")
+        csv_path = os.path.join(args.output_dir, model_safe_name, "global_mmlu_summary.csv")
         df.to_csv(csv_path, index=False)
         print(f"\nSummary CSV saved to: {csv_path}")
