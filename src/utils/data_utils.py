@@ -29,20 +29,20 @@ class WVSAnalyzer:
         }).reset_index()
         self.country_means.columns = ['s003', 'RC1_final', 'RC2_final']
         
-        if os.path.exists(country_code_path):
-            with open(country_code_path, 'rb') as f:
-                country_codes = pickle.load(f)
-            # Normalize column names if they differ from expectations
-            if 'Numeric' in country_codes.columns:
-                country_codes = country_codes.rename(columns={'Numeric': 's003', 'Country': 'country.territory', 'Cultural Region': 'Category'})
-            self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
-        else:
+        # if os.path.exists(country_code_path):
+        #     with open(country_code_path, 'rb') as f:
+        #         country_codes = pickle.load(f)
+        #     # Normalize column names if they differ from expectations
+        #     if 'Numeric' in country_codes.columns:
+        #         country_codes = country_codes.rename(columns={'Numeric': 's003', 'Country': 'country.territory', 'Cultural Region': 'Category'})
+        #     self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
+        # else:
             # Fallback if pickle doesn't exist
-            csv_path = "data/s003.csv"
-            if os.path.exists(csv_path):
-                country_codes = pd.read_csv(csv_path)
-                # s003.csv columns: "s003","country.territory","Category"
-                self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
+        csv_path = "data/s003.csv"
+        if os.path.exists(csv_path):
+            country_codes = pd.read_csv(csv_path)
+            # s003.csv columns: "s003","country.territory","Category"
+            self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
 
     def project_scores(self, scores_df):
         """

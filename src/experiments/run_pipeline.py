@@ -33,7 +33,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                          test_path="data/sample_data_mtl.json",
                          questions_path="data/culture_questions.json",
                          best_layer_ids=None,
-                         coeffs=[0.2, -0.2],
+                         coeffs=[],
                          test=False):
     
     # 1. Setup
@@ -63,11 +63,14 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         "model_name": model_name,
         "target_countries": countries_to_use,
         "points": [],
-        "vectors": [],
-        "perplexities": {},
-        "layer_diffs": {},
-        "domain_shifts": {}
+        'vectors': [],
+        'perplexities': {},
+        'layer_diffs': {},
+        'domain_shifts': {},
+        'best_coeffs': {}
     }
+    target_means = analyzer.get_target_country_means()
+    print(target_means)
     
     # --- STEP 1: BASELINE ---
     print("Evaluating Baseline...")
@@ -81,44 +84,9 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         'color': 'red'
     })
     release_memory(force=True)
-
-    # --- STEP 2: PROMPT STEERING ---
-    for country in countries_to_use:
-    #     print(f"[{country}] Running Prompt Interventions...")
-    #     # Basic
-    #     res_basic = evaluator.evaluate_dataset(test_data, system_prompt=BASIC_PROMPT_TEMPLATE.format(country=country))
-    #     save_detailed(output_dir, f"basic_{country}", res_basic)
-    #     s_basic = evaluator.aggregate_cultural_scores(res_basic, analyzer=analyzer)
-    #     summary_data["points"].append({
-    #         'RC1': float(s_basic['X_Axis']), 'RC2': float(s_basic['Y_Axis']), 
-    #         'label': f'Basic: {country}', 'color': 'purple'
-    #     })
-        
-    #     # Advanced (English)
-    #     res_adv_en = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], language='en')
-    #     save_detailed(output_dir, f"adv_en_{country}", res_adv_en)
-    #     s_adv_en = evaluator.aggregate_cultural_scores(res_adv_en, analyzer=analyzer)
-    #     summary_data["points"].append({
-    #         'RC1': float(s_adv_en['X_Axis']), 'RC2': float(s_adv_en['Y_Axis']), 
-    #         'label': f'Adv (EN): {country}', 'color': 'orange'
-    #     })
-        
-        # Adv (MLT)
-        print(f"[{country}] Running Baseline Prompt (MLT)...")
-        res_adv = evaluator.evaluate_dataset(test_data, language=country)
-        save_detailed(output_dir, f"baseline_mlt_{country}", res_adv)
-        print(f"[{country}] Running Advanced Prompt (MLT)...")
-        res_adv = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], language=country)
-        save_detailed(output_dir, f"adv_mlt_{country}", res_adv)
-        
-        
-        
-        s_adv = evaluator.aggregate_cultural_scores(res_adv, analyzer=analyzer)
-        summary_data["points"].append({
-            'RC1': float(s_adv['X_Axis']), 'RC2': float(s_adv['Y_Axis']), 
-            'label': f'Adv (MLT): {country}', 'color': 'orange'
-        })
-    # --- STEP 3: VECTOR STEERING ---
+    # save summary
+    save_summary(output_dir, summary_data)
+    # --- STEP 2: VECTOR STEERING ---
     print("Training Steering Vectors...")
     vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
     vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
@@ -142,83 +110,120 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         best_layers = sorted(layer_avg, key=layer_avg.get, reverse=True)
         print(f"Top layers for steering: {best_layers[:10]}")
         best_layers = sorted(best_layers)[:4]  # Select top 4 layers
+        # save best_layers to summary
+        summary_data["best_layers"] = best_layers
     evaluator.model.layer_ids = best_layers
 
     # Global Vector Steering
     print("Evaluating Global Vector Steering...")
-    
-    # Steer X and Y separately
-    # for coeff in coeffs:
-    #     res_vec_x = evaluator.evaluate_dataset(test_data, steering_vector=vec_x, coeff=coeff)
-    #     save_detailed(output_dir, f"vector_x_{coeff}", res_vec_x)
-    #     scores_vec_x = evaluator.aggregate_cultural_scores(res_vec_x, analyzer=analyzer)
-    #     summary_data["vectors"].append({
-    #         'RC1': float(scores_vec_x['X_Axis']),
-    #         'RC2': float(scores_vec_x['Y_Axis']),
-    #         'label': f'Vector Steering (X, {coeff})',
-    #         'color': 'blue',
-    #         'begin_point_label': 'Baseline'
-    #     })
-    
-    #     res_vec_y = evaluator.evaluate_dataset(test_data, steering_vector=vec_y, coeff=0.2)
-    #     save_detailed(output_dir, f"vector_y_{coeff}", res_vec_y)
-    #     scores_vec_y = evaluator.aggregate_cultural_scores(res_vec_y, analyzer=analyzer)
-    #     summary_data["vectors"].append({
-    #         'RC1': float(scores_vec_y['X_Axis']),
-    #         'RC2': float(scores_vec_y['Y_Axis']),
-    #         'label': f'Vector Steering (Y, {coeff})',
-    #         'color': 'blue',
-    #         'begin_point_label': 'Baseline'
-    #     })
 
-    #     res_steered = evaluator.evaluate_dataset(test_data, steering_vector=combined_vector, coeff=0.2)
-    #     save_detailed(output_dir, f"vector_combined_{coeff}", res_steered)
-    #     scores_steered = evaluator.aggregate_cultural_scores(res_steered, analyzer=analyzer)
-    #     summary_data["vectors"].append({
-    #         'RC1': float(scores_steered['X_Axis']), 
-    #         'RC2': float(scores_steered['Y_Axis']), 
-    #         'label': f'Vector Steering coeff {coeff}', 
-    #         'color': 'blue',
-    #         'begin_point_label': 'Baseline'
-    #     })
+    # Process coefficients structure (can be global list or country-specific mapping)
+    is_dict_coeffs = isinstance(coeffs, dict)
+    do_grid_search = not coeffs
+    
+    if do_grid_search:
+        print("No coefficients provided. Performing grid search for best coefficient per country.")
+    else:
+        if is_dict_coeffs:
+            print(f"Using country-specific coefficients: {coeffs}")
+        else:
+            print(f"Using provided global coefficients for all countries: {coeffs}")
 
     # Combined (Adv MLT + Vector)
     for country in countries_to_use:
         evaluator.model.reset()
-        # vec_x_basic = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
-        # vec_y_basic = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
-        vec_x_advance_mlt = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS_MLT[country], batch_size=8, language=country)
-        vec_y_advance_mlt = train_cultural_vector(evaluator.model, train_data, axis='Y', system_prompt=ADVANCE_PROMPTS_MLT[country], batch_size=8, language=country)
-        vec_x_mlt = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8, language=country)
-        vec_y_mlt = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8, language=country)
+        # Train vectors
+        vec_x_advance = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8, language=country)
+        vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8, language=country)
+        
         vec_mapping = {
-            # 'vec_x_advance': vec_x_basic,
-            # 'vec_y_advance': vec_y_basic,
-            # 'vec_x+advance': vec_x,
-            # 'vec_y+advance': vec_y,
-            'vec_x+advance_mlt': vec_x_mlt,
-            'vec_y+advance_mlt': vec_y_mlt,
-            'vec_x_advance_mlt': vec_x_advance_mlt,
-            'vec_y_advance_mlt': vec_y_advance_mlt
+            'vec_x': vec_x,
+            'vec_x_advance': vec_x_advance,
         }
+
+        best_coeff_found = {}
+        if do_grid_search:
+            # Grid search for best coefficient using train_data
+            if country in target_means:
+                target_rc1, target_rc2 = target_means[country]
+                print(f"[{country}] Performing grid search for best coefficient...")
+                print("Target coordinate: ", target_rc1, target_rc2)
+                
+                for vec_name, vec in vec_mapping.items():
+                    low, high = 0.0, 0.6
+                    print(f"[{country}] Vector {vec_name}: Starting binary (ternary) search in range [{low}, {high}]...")
+                    
+                    for i in range(4): # 4 iterations
+                        c1 = low + (high - low) / 3
+                        c2 = high - (high - low) / 3
+                        
+                        # Evaluate at c1
+                        res_search1 = evaluator.evaluate_dataset(train_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
+                                                         steering_vector=vec, coeff=c1, language=country)
+                        s_search1 = evaluator.aggregate_cultural_scores(res_search1, analyzer=analyzer)
+                        dist1 = np.sqrt((s_search1['X_Axis'] - target_rc1)**2 + (s_search1['Y_Axis'] - target_rc2)**2)
+                        
+                        # Evaluate at c2
+                        res_search2 = evaluator.evaluate_dataset(train_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
+                                                         steering_vector=vec, coeff=c2, language=country)
+                        s_search2 = evaluator.aggregate_cultural_scores(res_search2, analyzer=analyzer)
+                        dist2 = np.sqrt((s_search2['X_Axis'] - target_rc1)**2 + (s_search2['Y_Axis'] - target_rc2)**2)
+                        
+                        if dist1 < dist2:
+                            high = c2
+                            print(f"[{country}] Vector {vec_name}: Iteration {i+1}/4, Range: [{low:.4f}, {high:.4f}] - c1={c1:.4f} (dist: {dist1:.4f}) is better.")
+                        else:
+                            low = c1
+                            print(f"[{country}] Vector {vec_name}: Iteration {i+1}/4, Range: [{low:.4f}, {high:.4f}] - c2={c2:.4f} (dist: {dist2:.4f}) is better.")
+                        
+                        del res_search1, s_search1, res_search2, s_search2
+                        release_memory(force=True)
+                    
+                    best_c = (low + high) / 2
+                    best_coeff_found[vec_name] = best_c
+                    print(f"[{country}] Vector {vec_name}: Best coefficient found: {best_c:.4f}")
+            else:
+                print(f"Warning: No target means found for {country}, using default coefficient 0.2.")
+                best_coeff_found = {vec_name: 0.2 for vec_name in vec_mapping.keys()}
+        else:
+            # Using provided coefficients
+            best_coeff_found = {vec_name: None for vec_name in vec_mapping.keys()}
+
+        # Final Evaluation on test_data
+        summary_data["best_coeffs"][country] = best_coeff_found
+        
         for vec_name, vec in vec_mapping.items():
-            for coeff in coeffs:
-                print(f"[{country}] Combined (Basic + Vector)..."+ f"Vector: {vec_name}, Coeff: {coeff}")
+            if do_grid_search:
+                eval_coeffs = [best_coeff_found.get(vec_name, 0.2)]
+            elif is_dict_coeffs:
+                # Use country specific if available, otherwise fallback to any global ones in the dict (key '*')
+                eval_coeffs = coeffs.get(country, coeffs.get('*', []))
+                if not eval_coeffs:
+                    print(f"Warning: No coefficients specified for {country}, skipping evaluation.")
+                    continue
+            else:
+                eval_coeffs = coeffs
+            
+            for coeff in eval_coeffs:
+                is_best = do_grid_search # if grid search was done, the one being evaluates is "best"
+                label_suffix = " (best_grid)" if is_best else ""
+                print(f"[{country}] Final Evaluation (Test Data)... Vector: {vec_name}, Coeff: {coeff}{label_suffix}")
+                
                 res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
                                                 steering_vector=vec, coeff=coeff, language=country)
                 save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}_mlt", res_comb)
                 s_comb = evaluator.aggregate_cultural_scores(res_comb, analyzer=analyzer)
                 summary_data["vectors"].append({
                     'RC1': float(s_comb['X_Axis']), 'RC2': float(s_comb['Y_Axis']), 
-                    'label': f'vector_{country}_{vec_name}_{coeff}', 'color': 'green',
-                    'begin_point_label': f'Baseline'
+                    'label': f'vector_{country}_{vec_name}_{coeff}{label_suffix}', 'color': 'green' if not is_best else 'darkgreen',
+                    'begin_point_label': f'Baseline',
+                    'is_best_coeff': is_best
                 })
                 save_summary(output_dir, summary_data)
                 del res_comb, s_comb
                 release_memory(force=True)
 
-        del vec_x_advance_mlt, vec_y_advance_mlt, vec_mapping
-        # del vec_x_basic, vec_y_basic, vec_mapping
+        del vec_x_advance, vec_x, vec_mapping
         release_memory(force=True)
                 
 
@@ -245,7 +250,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the full evaluation pipeline for cultural steering experiments.")
     parser.add_argument('--model', type=str, default=DEFAULT_MODEL, help='Model name or path to use for evaluation')
     parser.add_argument('--best-layers', type=str, default=None, help='Comma-separated list of layer IDs to use (e.g., "1,2,3,4"). If not provided, top 4 layers will be automatically selected.')
-    parser.add_argument('--coeffs', type=str, default="0.2, -0.2", help='Comma-separated list of steering coefficients (e.g., "0.2,-0.2")')
+    parser.add_argument('--coeffs', type=str, default=None, help='Comma-separated list of steering coefficients (e.g., "0.2,-0.2"). If not provided, grid search will be performed.')
     parser.add_argument('--test', action='store_true', help='Run in test mode with only the first target country')
     args = parser.parse_args()
 
@@ -253,7 +258,22 @@ if __name__ == "__main__":
     if args.best_layers:
         best_layer_ids = [int(x.strip()) for x in args.best_layers.split(',')]
         
-    coeffs = [float(x.strip()) for x in args.coeffs.split(',')]
+    coeffs = [] # Default to grid search
+    if args.coeffs:
+        if ':' in args.coeffs:
+            # Handle country-specific mapping: Vietnam:0.1,0.2;Denmark:0.3
+            coeffs = {}
+            parts = args.coeffs.split(';')
+            for part in parts:
+                if ':' in part:
+                    country, vals = part.split(':')
+                    coeffs[country.strip()] = [float(v.strip()) for v in vals.split(',')]
+                else:
+                    # Global values without a prefix
+                    coeffs['*'] = [float(v.strip()) for v in part.split(',')]
+        else:
+            # Standard global list
+            coeffs = [float(x.strip()) for x in args.coeffs.split(',')]
         
     print(f"Using best layers: {best_layer_ids}" if best_layer_ids else "No best layers provided, will select automatically.")
     print(f"Using steering coefficients: {coeffs}")
