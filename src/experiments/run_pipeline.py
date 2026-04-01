@@ -133,8 +133,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     for country in countries_to_use:
         evaluator.model.reset()
         # Train vectors
-        vec_x_advance = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8, language=country)
-        vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8, language=country)
+        vec_x_advance = train_cultural_vector(evaluator.model, train_data[:180], axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        vec_x = train_cultural_vector(evaluator.model, train_data[:180], axis='X', batch_size=8)
         
         vec_mapping = {
             'vec_x': vec_x,
@@ -158,14 +158,14 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                         c2 = high - (high - low) / 3
                         
                         # Evaluate at c1
-                        res_search1 = evaluator.evaluate_dataset(train_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
-                                                         steering_vector=vec, coeff=c1, language=country)
+                        res_search1 = evaluator.evaluate_dataset(train_data[180:], system_prompt=ADVANCE_PROMPTS[country], 
+                                                         steering_vector=vec, coeff=c1)
                         s_search1 = evaluator.aggregate_cultural_scores(res_search1, analyzer=analyzer)
                         dist1 = np.sqrt((s_search1['X_Axis'] - target_rc1)**2 + (s_search1['Y_Axis'] - target_rc2)**2)
                         
                         # Evaluate at c2
-                        res_search2 = evaluator.evaluate_dataset(train_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
-                                                         steering_vector=vec, coeff=c2, language=country)
+                        res_search2 = evaluator.evaluate_dataset(train_data[180:], system_prompt=ADVANCE_PROMPTS[country], 
+                                                         steering_vector=vec, coeff=c2)
                         s_search2 = evaluator.aggregate_cultural_scores(res_search2, analyzer=analyzer)
                         dist2 = np.sqrt((s_search2['X_Axis'] - target_rc1)**2 + (s_search2['Y_Axis'] - target_rc2)**2)
                         
@@ -191,7 +191,16 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
 
         # Final Evaluation on test_data
         summary_data["best_coeffs"][country] = best_coeff_found
-        
+        save_summary(output_dir, summary_data)
+
+        # rebuild vec with full data
+        vec_x_advance = train_cultural_vector(evaluator.model, train_data, axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+        vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
+        vec_mapping = {
+            'vec_x': vec_x,
+            'vec_x_advance': vec_x_advance,
+        }
+            
         for vec_name, vec in vec_mapping.items():
             if do_grid_search:
                 eval_coeffs = [best_coeff_found.get(vec_name, 0.2)]
@@ -209,8 +218,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                 label_suffix = " (best_grid)" if is_best else ""
                 print(f"[{country}] Final Evaluation (Test Data)... Vector: {vec_name}, Coeff: {coeff}{label_suffix}")
                 
-                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS_MLT[country], 
-                                                steering_vector=vec, coeff=coeff, language=country)
+                res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], 
+                                                steering_vector=vec, coeff=coeff)
                 save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}_mlt", res_comb)
                 s_comb = evaluator.aggregate_cultural_scores(res_comb, analyzer=analyzer)
                 summary_data["vectors"].append({
