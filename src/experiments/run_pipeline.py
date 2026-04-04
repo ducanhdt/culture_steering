@@ -73,26 +73,20 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     print(target_means)
     
     # --- STEP 1: BASELINE ---
-    print("Evaluating Baseline...")
-    res_baseline = evaluator.evaluate_dataset(test_data)
-    save_detailed(output_dir, "baseline", res_baseline)
-    scores_baseline = evaluator.aggregate_cultural_scores(res_baseline, analyzer=analyzer)
-    summary_data["points"].append({
-        'RC1': float(scores_baseline['X_Axis']), 
-        'RC2': float(scores_baseline['Y_Axis']), 
-        'label': 'Baseline', 
-        'color': 'red'
-    })
-    release_memory(force=True)
-    # save summary
-    save_summary(output_dir, summary_data)
-    # --- STEP 2: VECTOR STEERING ---
-    print("Training Steering Vectors...")
-    vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
-    vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
-    combined_vector = vec_x + vec_y
-    release_memory(force=True)
-    
+    # print("Evaluating Baseline...")
+    # res_baseline = evaluator.evaluate_dataset(test_data)
+    # save_detailed(output_dir, "baseline", res_baseline)
+    # scores_baseline = evaluator.aggregate_cultural_scores(res_baseline, analyzer=analyzer)
+    # summary_data["points"].append({
+    #     'RC1': float(scores_baseline['X_Axis']), 
+    #     'RC2': float(scores_baseline['Y_Axis']), 
+    #     'label': 'Baseline', 
+    #     'color': 'red'
+    # })
+    # release_memory(force=True)
+    # # save summary
+    # save_summary(output_dir, summary_data)
+
     
     # Selection of top layers for subsequent evaluation
     if best_layer_ids is not None:
@@ -101,6 +95,13 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     else:
         # Layer Differential Analysis
         print("Finding best layers for steering...")
+
+        print("Training Steering Vectors...")
+        vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
+        vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
+        combined_vector = vec_x + vec_y
+        release_memory(force=True)
+
         layer_diffs_raw = evaluator.find_best_layers_per_question(combined_vector, train_data)
         summary_data["layer_diffs"] = layer_diffs_raw
         layer_avg = {}
@@ -133,20 +134,21 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     for country in countries_to_use:
         evaluator.model.reset()
         # Train vectors
-        vec_x_advance = train_cultural_vector(evaluator.model, train_data[:180], axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
-        vec_x = train_cultural_vector(evaluator.model, train_data[:180], axis='X', batch_size=8)
         
-        vec_mapping = {
-            'vec_x': vec_x,
-            'vec_x_advance': vec_x_advance,
-        }
-
         best_coeff_found = {}
         if do_grid_search:
             # Grid search for best coefficient using train_data
             if country in target_means:
-                target_rc1, target_rc2 = target_means[country]
                 print(f"[{country}] Performing grid search for best coefficient...")
+                print(f"Training vectors for {country}...")
+                vec_x_advance = train_cultural_vector(evaluator.model, train_data[:180], axis='X', system_prompt=ADVANCE_PROMPTS[country], batch_size=8)
+                vec_x = train_cultural_vector(evaluator.model, train_data[:180], axis='X', batch_size=8)
+                
+                vec_mapping = {
+                    'vec_x': vec_x,
+                    'vec_x_advance': vec_x_advance,
+                }
+                target_rc1, target_rc2 = target_means[country]
                 print("Target coordinate: ", target_rc1, target_rc2)
                 
                 for vec_name, vec in vec_mapping.items():
