@@ -186,8 +186,9 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                     steering_configs=steering_configs,
                     language=language,
                 )
-                save_detailed(output_dir, f"{config['name']}_{label}_{country}", result)
-                del trained_vecs, steering_configs, result
+                detail_name = f"{config['name']}_{label}_{country}"
+                save_detailed(output_dir, detail_name, result)
+                del trained_vecs, steering_configs
 
             else:
                 # --- Single-vector or no-vector steering ---
@@ -212,9 +213,20 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                     steering_configs=steering_cfg,
                     language=language,
                 )
-                save_detailed(output_dir, f"{config['name']}_{config.get('steering_vector')}_{config.get('coeff')}_{country}", result)
-                del vec, result
+                detail_name = f"{config['name']}_{config.get('steering_vector')}_{config.get('coeff')}_{country}"
+                save_detailed(output_dir, detail_name, result)
+                del vec
 
+            scores = evaluator.aggregate_cultural_scores(result, analyzer=analyzer)
+            summary_data["points"].append({
+                "RC1": float(scores["X_Axis"]),
+                "RC2": float(scores["Y_Axis"]),
+                "label": f"{config['name']}_{country}",
+                "config": config['name'],
+                "country": country,
+            })
+            del result
+            save_summary(output_dir, summary_data)
             release_memory(force=True)
     # Domain Shifts (Baseline vs Steered)
     # pivot_baseline = evaluator.get_domain_pivot(res_baseline)
