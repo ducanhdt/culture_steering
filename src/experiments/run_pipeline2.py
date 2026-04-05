@@ -68,19 +68,38 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         "layer_diffs": {},
         "domain_shifts": {}
     }
-    
-    configs = [
-        # {"name": "baseline", "system_prompt": None, "steering_vector": None, "coeff": None},
-        {"name": "basic_prompt", "system_prompt": 'basic', "steering_vector": None, "coeff": None},
-        {"name": "advance_prompt", "system_prompt": 'advance', "steering_vector": None, "coeff": None},
-        # {"name": "vector_steering", "system_prompt": None, "steering_vector": 'X', "coeff": 0.2},
-        {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_vector": 'X', "coeff": 0.2},
-        {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
-        {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
-        {'name': "baseline_mlt", "system_prompt": None, "steering_vector": None, "coeff": None},
-        {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": None, "coeff": None},
-        {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
-        {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
+    configs = []
+    # configs = [
+    #     # {"name": "baseline", "system_prompt": None, "steering_vector": None, "coeff": None},
+    #     {"name": "basic_prompt", "system_prompt": 'basic', "steering_vector": None, "coeff": None},
+    #     {"name": "advance_prompt", "system_prompt": 'advance', "steering_vector": None, "coeff": None},
+    #     # {"name": "vector_steering", "system_prompt": None, "steering_vector": 'X', "coeff": 0.2},
+    #     {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_vector": 'X', "coeff": 0.2},
+    #     {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
+    #     {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
+    #     {'name': "baseline_mlt", "system_prompt": None, "steering_vector": None, "coeff": None},
+    #     {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": None, "coeff": None},
+    #     {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
+    #     {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
+    # ]
+
+    configs += [
+        {
+            "name": "multi_vector_advance",
+            "system_prompt": "advance",
+            "multi_vector": [
+                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+            ],
+        },
+        {
+            "name": "multi_vector_sp_advance",
+            "system_prompt": "advance",
+            "multi_vector": [
+                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+            ],
+        },
     ]
 
     
@@ -109,7 +128,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
         combined_vector = vec_x + vec_y
         release_memory(force=True)
-        
+
         # Layer Differential Analysis
         print("Finding best layers for steering...")
         layer_diffs_raw = evaluator.find_best_layers_per_question(combined_vector, train_data)
@@ -121,49 +140,81 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         best_layers = sorted(layer_avg, key=layer_avg.get, reverse=True)
         print(f"Top layers for steering: {best_layers[:10]}")
         best_layers = sorted(best_layers)[:4]  # Select top 4 layers
-    evaluator.model.layer_ids = best_layers
 
     
     for config in configs:
         config = config.copy()
         for country in countries_to_use:
             print(f"Evaluating config: {config['name']} | Country: {country}")
-            if config['system_prompt'] == 'basic':
+            if config.get('system_prompt') == 'basic':
                 system_prompt = BASIC_PROMPT_TEMPLATE.format(country=country)
-            elif config['system_prompt'] == 'advance':
+            elif config.get('system_prompt') == 'advance':
                 system_prompt = ADVANCE_PROMPTS[country]
-            elif config['system_prompt'] == 'advance_mlt':
+            elif config.get('system_prompt') == 'advance_mlt':
                 system_prompt = ADVANCE_PROMPTS_MLT[country]
             else:
                 system_prompt = None
-                    
-            if config['steering_vector']:
-                if "vector_sp" in config['name']:
-                    vector_prompt = system_prompt
-                else:
-                    vector_prompt = None
-                    
-                vec = train_cultural_vector(
-                    evaluator.model,
-                    train_data,
-                    axis='X' if config['steering_vector']=='X' else 'Y',
-                    system_prompt=vector_prompt,
-                    batch_size=8,
-                )
-                coeff = config['coeff'] if 'coeff' in config else 0.2
-            else:
-                vec = None
-                coeff = None
-            
-            
-            if 'mlt' in config['name']:
-                language = country
-            else:                
-                language = None
-            result = evaluator.evaluate_dataset(test_data, steering_vector=vec, coeff=coeff, system_prompt=system_prompt, language=language)
-            save_detailed(output_dir, f"{config['name']}_{config['steering_vector']}_{coeff}_{country}", result)
 
-            del vec, result
+            language = country if 'mlt' in config['name'] else None
+
+            if config.get('multi_vector'):
+                # --- Multi-vector steering: each axis → its own layer set ---
+                steering_configs = []
+                trained_vecs = []
+                for spec in config['multi_vector']:
+                    vector_prompt = system_prompt if "vector_sp" in config['name'] else None
+                    v = train_cultural_vector(
+                        evaluator.model,
+                        train_data,
+                        axis=spec['axis'],
+                        system_prompt=vector_prompt,
+                        batch_size=8,
+                    )
+                    steering_configs.append({
+                        "vector": v,
+                        "coeff": spec['coeff'],
+                        "layer_ids": spec['layer_ids'],
+                    })
+                    trained_vecs.append(v)
+                label = "_".join(
+                    f"{s['axis']}{s['coeff']}L{'_'.join(str(l) for l in s['layer_ids'])}"
+                    for s in config['multi_vector']
+                )
+                result = evaluator.evaluate_dataset(
+                    test_data,
+                    system_prompt=system_prompt,
+                    steering_configs=steering_configs,
+                    language=language,
+                )
+                save_detailed(output_dir, f"{config['name']}_{label}_{country}", result)
+                del trained_vecs, steering_configs, result
+
+            else:
+                # --- Single-vector or no-vector steering ---
+                if config.get('steering_vector'):
+                    vector_prompt = system_prompt if "vector_sp" in config['name'] else None
+                    vec = train_cultural_vector(
+                        evaluator.model,
+                        train_data,
+                        axis='X' if config['steering_vector'] == 'X' else 'Y',
+                        system_prompt=vector_prompt,
+                        batch_size=8,
+                    )
+                    coeff = config.get('coeff', 0.2)
+                    steering_cfg = [{"vector": vec, "coeff": coeff, "layer_ids": best_layers}]
+                else:
+                    vec = None
+                    steering_cfg = None
+
+                result = evaluator.evaluate_dataset(
+                    test_data,
+                    system_prompt=system_prompt,
+                    steering_configs=steering_cfg,
+                    language=language,
+                )
+                save_detailed(output_dir, f"{config['name']}_{config.get('steering_vector')}_{config.get('coeff')}_{country}", result)
+                del vec, result
+
             release_memory(force=True)
     # Domain Shifts (Baseline vs Steered)
     # pivot_baseline = evaluator.get_domain_pivot(res_baseline)
@@ -195,12 +246,17 @@ if __name__ == "__main__":
     best_layer_ids = None
     if args.best_layers:
         best_layer_ids = [int(x.strip()) for x in args.best_layers.split(',')]
-        
+
     coeffs = [float(x.strip()) for x in args.coeffs.split(',')]
-        
+
     print(f"Using best layers: {best_layer_ids}" if best_layer_ids else "No best layers provided, will select automatically.")
     print(f"Using steering coefficients: {coeffs}")
     if args.test:
         print("Running in TEST mode - using only the first target country")
-    
-    run_paper_experiments(model_name=args.model, best_layer_ids=best_layer_ids, coeffs=coeffs, test=args.test)
+
+    run_paper_experiments(
+        model_name=args.model,
+        best_layer_ids=best_layer_ids,
+        coeffs=coeffs,
+        test=args.test,
+    )

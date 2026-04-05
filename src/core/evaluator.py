@@ -29,13 +29,23 @@ class CulturalEvaluator:
         if DEVICE == "cuda" and force:
             torch.cuda.empty_cache()
 
-    def evaluate_dataset(self, dataset, system_prompt="", steering_vector=None, coeff=0.1, language=None, batch_size=1):
+    def evaluate_dataset(self, dataset, system_prompt="", steering_configs=None, language=None, batch_size=1):
         """
         Runs batch evaluation on a dataset.
+
+        Args:
+            steering_configs: optional list of dicts, each with keys
+                {"vector": SteeringVector, "coeff": float, "layer_ids": list[int]}.
+                Each vector is applied only to its designated layers.
+                Pass a single-element list for standard single-vector steering.
         """
         self.model.reset()
-        if steering_vector:
-            self.model.set_control(steering_vector, coeff)
+        if steering_configs:
+            controls = [
+                (cfg["vector"], cfg["coeff"], cfg["layer_ids"])
+                for cfg in steering_configs
+            ]
+            self.model.set_multi_control(controls)
 
         ending = QUESTION_ENDINGS.get(language, QUESTION_ENDINGS['en'])
         prompts = []
@@ -148,17 +158,15 @@ class CulturalEvaluator:
         Calculates the differential effect of each layer for each question in the dataset.
         Returns a dictionary of {question_id: {layer_id: differential}}
         """
-        # evaluate_dataset handles reset internally; no steering = clean baseline
         baseline_results = self.evaluate_dataset(dataset)
         baseline_scores = {res['wvs_id']: res['normalized_score'] for res in baseline_results}
 
         layer_differentials = {}
         for layer_id in tqdm(self.layer_ids, desc="Finding Best Layers"):
-            # Set single layer BEFORE calling evaluate_dataset.
-            # evaluate_dataset resets then re-applies the steering vector using
-            # the current model.layer_ids — so the order here matters.
-            self.model.layer_ids = [layer_id]
-            steered_results = self.evaluate_dataset(dataset, steering_vector=steering_vector, coeff=coeff)
+            steered_results = self.evaluate_dataset(
+                dataset,
+                steering_configs=[{"vector": steering_vector, "coeff": coeff, "layer_ids": [layer_id]}],
+            )
 
             for res in steered_results:
                 q_id = res['wvs_id']
@@ -169,9 +177,6 @@ class CulturalEvaluator:
 
             self._cleanup_memory(force=DEVICE == "cuda")
 
-        # Restore full layer list
-        self.model.layer_ids = self.layer_ids
-        self.model.reset()
         self._cleanup_memory(force=True)
         return layer_differentials
 
