@@ -134,7 +134,10 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     for country in countries_to_use:
         evaluator.model.reset()
         # Train vectors
-        
+        vec_mapping = {
+                    'vec_x': None,
+                    'vec_x_advance': None,
+                }
         best_coeff_found = {}
         if do_grid_search:
             # Grid search for best coefficient using train_data
@@ -152,10 +155,10 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                 print("Target coordinate: ", target_rc1, target_rc2)
                 
                 for vec_name, vec in vec_mapping.items():
-                    low, high = 0.0, 0.6
+                    low, high = 0.0, 2.0
                     print(f"[{country}] Vector {vec_name}: Starting binary (ternary) search in range [{low}, {high}]...")
                     
-                    for i in range(4): # 4 iterations
+                    for i in range(6): # 4 iterations
                         c1 = low + (high - low) / 3
                         c2 = high - (high - low) / 3
                         
