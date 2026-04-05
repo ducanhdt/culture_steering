@@ -88,16 +88,16 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
             "name": "multi_vector_advance",
             "system_prompt": "advance",
             "multi_vector": [
-                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+                {"axis": "X", "coeff": 2, "layer_ids": [8, 9, 10, 11, 12]},
+                {"axis": "X", "coeff": -2, "layer_ids": [17,18,19,20]},
             ],
         },
         {
             "name": "multi_vector_sp_advance",
             "system_prompt": "advance",
             "multi_vector": [
-                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+                {"axis": "X", "coeff": 2, "layer_ids": [8, 9, 10, 11, 12]},
+                {"axis": "X", "coeff": -2, "layer_ids": [17,18,19,20]},
             ],
         },
     ]
