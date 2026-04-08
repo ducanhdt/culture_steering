@@ -55,8 +55,8 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     if test:
         print("TEST MODE: Using only the first target country for faster execution.")
         countries_to_use = TARGET_COUNTRIES[:2] 
-        test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
-        train_data = train_data[:60]
+        # test_data = test_data[:100]  # Use a subset of test data for faster evaluation 
+        # train_data = train_data[:60]
     else:
         countries_to_use = TARGET_COUNTRIES
     summary_data = {
@@ -88,22 +88,22 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
             "name": "multi_vector_advance",
             "system_prompt": "advance",
             "multi_vector": [
-                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
-                {"axis": "Y", "coeff": -1, "layer_ids": [17,18,19,20]},
+                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
+                {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
+                {"axis": "X", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
+                {"axis": "Y", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
             ],
         },
-        {
-            "name": "multi_vector_sp_advance",
-            "system_prompt": "advance",
-            "multi_vector": [
-                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
-                {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-                {"axis": "Y", "coeff": -1, "layer_ids": [17,18,19,20]},
-            ],
-        },
+        # {
+        #     "name": "multi_vector_sp_advance",
+        #     "system_prompt": "advance",
+        #     "multi_vector": [
+        #         {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+        #         {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+        #         {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+        #         {"axis": "Y", "coeff": -1, "layer_ids": [17,18,19,20]},
+        #     ],
+        # },
     ]
 
     
