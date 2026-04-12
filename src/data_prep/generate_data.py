@@ -2,6 +2,7 @@
 import os
 import json
 import time
+import argparse
 import torch
 import pandas as pd
 from tqdm import tqdm
@@ -96,8 +97,14 @@ def generate_raw_scenarios(repeats=5):
             print(f"Batch {i+1} completed, total scenarios: {len(all_scenarios)}")
         except Exception as e:
             print(f"Error during batch {i+1}: {e}")
-        time.sleep(10) # Reduced sleep for efficiency, adjust if rate-limited
-    
+        time.sleep(60)
+
+    df = pd.DataFrame(all_scenarios)
+    print("\nDistribution by domain:")
+    print(df.groupby('domain').size().to_string())
+    print("\nDistribution by wvs_id:")
+    print(df.groupby('wvs_id').size().to_string())
+    print()
     return all_scenarios
 
 def translate_dataset(sample_data, batch_size=32):
@@ -139,27 +146,33 @@ def translate_dataset(sample_data, batch_size=32):
     return sample_data
 
 def main():
-    os.makedirs("data", exist_ok=True)
-    
+    parser = argparse.ArgumentParser(description="Generate and translate WVS forced-choice scenarios")
+    parser.add_argument("--repeats-train", type=int, default=5, help="Number of generation batches for the train set")
+    parser.add_argument("--repeats-test", type=int, default=5, help="Number of generation batches for the test set")
+    parser.add_argument("--output-dir", type=str, default="data", help="Directory to save output JSON files")
+    args = parser.parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
     print("Starting data generation pipeline...")
-    
-    # Generate Train and Test sets
-    test_scenarios = generate_raw_scenarios(repeats=2) # Default to small for testing
-    train_scenarios = generate_raw_scenarios(repeats=2)
-    
-    # Translate
-    print("Translating Test set...")
+
+    print(f"Generating test set ({args.repeats_test} batches)...")
+    test_scenarios = generate_raw_scenarios(repeats=args.repeats_test)
+    print(f"Generating train set ({args.repeats_train} batches)...")
+    train_scenarios = generate_raw_scenarios(repeats=args.repeats_train)
+
+    print("Translating test set...")
     test_scenarios = translate_dataset(test_scenarios)
-    print("Translating Train set...")
+    print("Translating train set...")
     train_scenarios = translate_dataset(train_scenarios)
-    
-    # Save
-    with open('data/sample_data_mtl.json', 'w') as f:
+
+    test_path = os.path.join(args.output_dir, "sample_data_mtl.json")
+    train_path = os.path.join(args.output_dir, "train_data_mtl.json")
+    with open(test_path, 'w') as f:
         json.dump(test_scenarios, f, indent=2)
-    with open('data/train_data_mtl.json', 'w') as f:
+    with open(train_path, 'w') as f:
         json.dump(train_scenarios, f, indent=2)
-        
-    print("Data generation complete. Files saved to data/sample_data_mtl.json and data/train_data_mtl.json")
+
+    print(f"Done. Saved to {test_path} and {train_path}")
 
 if __name__ == "__main__":
     main()
