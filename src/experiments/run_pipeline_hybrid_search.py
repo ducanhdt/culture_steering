@@ -73,19 +73,19 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     print(target_means)
     
     # --- STEP 1: BASELINE ---
-    # print("Evaluating Baseline...")
-    # res_baseline = evaluator.evaluate_dataset(test_data)
-    # save_detailed(output_dir, "baseline", res_baseline)
-    # scores_baseline = evaluator.aggregate_cultural_scores(res_baseline, analyzer=analyzer)
-    # summary_data["points"].append({
-    #     'RC1': float(scores_baseline['X_Axis']), 
-    #     'RC2': float(scores_baseline['Y_Axis']), 
-    #     'label': 'Baseline', 
-    #     'color': 'red'
-    # })
-    # release_memory(force=True)
-    # # save summary
-    # save_summary(output_dir, summary_data)
+    print("Evaluating Baseline...")
+    res_baseline = evaluator.evaluate_dataset(test_data)
+    save_detailed(output_dir, "baseline", res_baseline)
+    scores_baseline = evaluator.aggregate_cultural_scores(res_baseline, analyzer=analyzer)
+    summary_data["points"].append({
+        'RC1': float(scores_baseline['X_Axis']), 
+        'RC2': float(scores_baseline['Y_Axis']), 
+        'label': 'Baseline', 
+        'color': 'red'
+    })
+    release_memory(force=True)
+    # save summary
+    save_summary(output_dir, summary_data)
 
     
     # Selection of top layers for subsequent evaluation
@@ -247,12 +247,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
     # domain_shifts = (pivot_steered - pivot_baseline).to_dict()
     # summary_data["domain_shifts"] = domain_shifts
 
-    # # --- STEP 4: PERPLEXITY ---
-    # print("Measuring Steering Cost...")
-    # coeffs = [-0.4, -0.2, 0, 0.2, 0.4]
-    # for c in coeffs:
-    #     ppl = evaluator.calculate_perplexity(test_data[::5], steering_vector=combined_vector, coeff=c)
-    #     summary_data["perplexities"][str(c)] = float(ppl)
+
 
     save_summary(output_dir, summary_data)
     release_memory(force=True)

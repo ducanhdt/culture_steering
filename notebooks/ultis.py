@@ -426,7 +426,7 @@ def load_probing_profile_data(file_path, model_name="unknown model", split_by_do
 		data['country'] = data['domain'].apply(lambda x: f"{model_name}_{x}")
 	else:
 		data['country'] = model_name
-	
+	data['source_file'] = file_path
 	return  data
 
 import matplotlib.pyplot as plt
@@ -452,7 +452,7 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 	if add_texts:
 		texts = []
 		for _, row in pca_result_country_level.iterrows():
-			if x_lim[0] <= row['RC1_final'] <= x_lim[1] and y_lim[0] <= row['RC2_final'] <= y_lim[1]:
+			if x_lim[0] <= row['RC1_final'] <= x_lim[1] and y_lim[0] <= row['RC2_final'] <= y_lim[1] and row['country.territory'] in target_countries:
 				texts.append(ax.text(row['RC1_final'], row['RC2_final'], row['country.territory'], fontsize=10))
 
 	# 4. Plot Additional Points (X markers)
@@ -477,8 +477,8 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 				ax.arrow(begin_x, begin_y, row['RC1']-begin_x, row['RC2']-begin_y, 
 						head_width=0.08, head_length=0.08, fc=color, ec=color, 
 						length_includes_head=True, alpha=0.8)
-				if add_texts and x_lim[0] <= row['RC1'] <= x_lim[1] and y_lim[0] <= row['RC2'] <= y_lim[1]:
-					texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=10, color=color))
+				# if add_texts and x_lim[0] <= row['RC1'] <= x_lim[1] and y_lim[0] <= row['RC2'] <= y_lim[1]:
+				# 	texts.append(ax.text(row['RC1'], row['RC2'], row['country'], fontsize=10, color=color))
 	# 6. Adjust Text to prevent overlap
 
 	# 7. Formatting
@@ -495,18 +495,14 @@ def plot_culture_map(additional_points_df=None, additional_vectors_df=None, ax=N
 		handles, labels = ax.get_legend_handles_labels()
 		# Create a proxy artist for the vector (an arrow-like line)
 		if additional_vectors_df is not None:
-			# color_mapping = {
-			# 'orange': 'Advanced Prompt Steering',
-			# 'purple': 'Basic Prompt Steering',
-			# 'cyan': 'New Advanced Prompt Steering',
-			# 'blue': 'Vector Steering',
-			# }
 			color_mapping = {
-				'orange': 'Basic + vector',
-				'purple': 'Basic Prompt Steering',
-				'cyan': 'Basic + new vector',
-				'blue': 'Vector Steering',
-				}
+			'orange': 'Advanced Prompt Steering',
+			'purple': 'Basic Prompt Steering',
+			'cyan': 'New Advanced Prompt Steering',
+			'blue': 'Vector Steering',
+			'green': 'Prompt + Vector Steering',
+			'brown': 'Prompt + Vector Prompt Steering',
+			}
 			# get unique colors in additional_vectors_df
 			color_set = set(additional_vectors_df['color'].tolist())
 			for color, label in color_mapping.items():

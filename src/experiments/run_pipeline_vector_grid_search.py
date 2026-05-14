@@ -70,7 +70,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         "domain_shifts": {}
     }
     configs = []
-
+    
     configs.extend([
         {"name": f"vector_steering_{coeff}_X", "system_prompt": None, "steering_vector": 'X', "coeff": coeff}
         for coeff in [-0.3, -0.2, -0.1, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
@@ -166,22 +166,23 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         del result
         save_summary(output_dir, summary_data)
         release_memory(force=True)
-    # Domain Shifts (Baseline vs Steered)
-    # pivot_baseline = evaluator.get_domain_pivot(res_baseline)
-    # pivot_steered = evaluator.get_domain_pivot(res_steered)
-    # domain_shifts = (pivot_steered - pivot_baseline).to_dict()
-    # summary_data["domain_shifts"] = domain_shifts
 
     # # --- STEP 4: PERPLEXITY ---
-    # print("Measuring Steering Cost...")
-    # coeffs = [-0.4, -0.2, 0, 0.2, 0.4]
-    # for c in coeffs:
-    #     ppl = evaluator.calculate_perplexity(test_data[::5], steering_vector=combined_vector, coeff=c)
-    #     summary_data["perplexities"][str(c)] = float(ppl)
+    print("Measuring Steering Cost...")
+    coeffs = [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8,1]
+    
+    vec_x = train_cultural_vector(evaluator.model, train_data, axis='X', batch_size=8)
+    vec_y = train_cultural_vector(evaluator.model, train_data, axis='Y', batch_size=8)
+    combined_vector = vec_x + vec_y
+    
+    for c in coeffs:
+        ppl = evaluator.calculate_perplexity(test_data[::5], steering_vector=combined_vector, coeff=c)
+        summary_data["perplexities"][str(c)] = float(ppl)
 
     save_summary(output_dir, summary_data)
     release_memory(force=True)
     print(f"All evaluation results saved to {output_dir}")
+
 
 if __name__ == "__main__":
     # read --model argument from command line

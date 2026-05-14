@@ -68,58 +68,45 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
         "layer_diffs": {},
         "domain_shifts": {}
     }
-    configs = []
-    # configs = [
-    #     # {"name": "baseline", "system_prompt": None, "steering_vector": None, "coeff": None},
-    #     {"name": "basic_prompt", "system_prompt": 'basic', "steering_vector": None, "coeff": None},
-    #     {"name": "advance_prompt", "system_prompt": 'advance', "steering_vector": None, "coeff": None},
-    #     # {"name": "vector_steering", "system_prompt": None, "steering_vector": 'X', "coeff": 0.2},
-    #     {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_vector": 'X', "coeff": 0.2},
-    #     {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
-    #     {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
-    #     {'name': "baseline_mlt", "system_prompt": None, "steering_vector": None, "coeff": None},
-    #     {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": None, "coeff": None},
-    #     {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
-    #     {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
-    # ]
-
-    configs += [
-        {
-            "name": "multi_vector_advance",
-            "system_prompt": "advance",
-            "multi_vector": [
-                {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
-                {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
-                {"axis": "X", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
-                {"axis": "Y", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
-            ],
-        },
-        # {
-        #     "name": "multi_vector_sp_advance",
-        #     "system_prompt": "advance",
-        #     "multi_vector": [
-        #         {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-        #         {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
-        #         {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
-        #         {"axis": "Y", "coeff": -1, "layer_ids": [17,18,19,20]},
-        #     ],
-        # },
+    # configs = []
+    configs = [
+        {"name": "baseline", "system_prompt": None, "steering_vector": None, "coeff": None},
+        {"name": "basic_prompt", "system_prompt": 'basic', "steering_vector": None, "coeff": None},
+        {"name": "advance_prompt", "system_prompt": 'advance', "steering_vector": None, "coeff": None},
+        # {"name": "vector_steering", "system_prompt": None, "steering_vector": 'X', "coeff": 0.2},
+        # {"name": "vector_basic_prompt", "system_prompt": 'basic', "steering_vector": 'X', "coeff": 0.2},
+        # {"name": "vector_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
+        # {'name': "vector_sp_advance_prompt", "system_prompt": 'advance', "steering_vector": 'X', "coeff": 0.2},
+        # {'name': "baseline_mlt", "system_prompt": None, "steering_vector": None, "coeff": None},
+        # {"name": "advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": None, "coeff": None},
+        # {"name": "vector_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
+        # {"name": "vector_sp_advance_mlt", "system_prompt": 'advance_mlt', "steering_vector": 'X', "coeff": 0.2},
     ]
 
-    
-    # --- STEP 1: BASELINE ---
-    print("Evaluating Baseline...")
-    res_baseline = evaluator.evaluate_dataset(test_data)
-    save_detailed(output_dir, "baseline", res_baseline)
-    scores_baseline = evaluator.aggregate_cultural_scores(res_baseline, analyzer=analyzer)
-    summary_data["points"].append({
-        'RC1': float(scores_baseline['X_Axis']), 
-        'RC2': float(scores_baseline['Y_Axis']), 
-        'label': 'Baseline', 
-        'color': 'red'
-    })
-    release_memory(force=True)
+    # configs += [
+    #     {
+    #         "name": "multi_vector_advance",
+    #         "system_prompt": "advance",
+    #         "multi_vector": [
+    #             {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
+    #             {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12,13]},
+    #             {"axis": "X", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
+    #             {"axis": "Y", "coeff": -1, "layer_ids": [14,15,16,17,18,19,20]},
+    #         ],
+    #     },
+    #     {
+    #         "name": "multi_vector_sp_advance",
+    #         "system_prompt": "advance",
+    #         "multi_vector": [
+    #             {"axis": "X", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+    #             {"axis": "X", "coeff": -1, "layer_ids": [17,18,19,20]},
+    #             {"axis": "Y", "coeff": 1, "layer_ids": [8, 9, 10, 11, 12]},
+    #             {"axis": "Y", "coeff": -1, "layer_ids": [17,18,19,20]},
+    #         ],
+    #     },
+    # ]
 
+    
     # --- STEP 3: VECTOR STEERING ---
     
     # Selection of top layers for subsequent evaluation
@@ -232,18 +219,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
             del result
             save_summary(output_dir, summary_data)
             release_memory(force=True)
-    # Domain Shifts (Baseline vs Steered)
-    # pivot_baseline = evaluator.get_domain_pivot(res_baseline)
-    # pivot_steered = evaluator.get_domain_pivot(res_steered)
-    # domain_shifts = (pivot_steered - pivot_baseline).to_dict()
-    # summary_data["domain_shifts"] = domain_shifts
 
-    # # --- STEP 4: PERPLEXITY ---
-    # print("Measuring Steering Cost...")
-    # coeffs = [-0.4, -0.2, 0, 0.2, 0.4]
-    # for c in coeffs:
-    #     ppl = evaluator.calculate_perplexity(test_data[::5], steering_vector=combined_vector, coeff=c)
-    #     summary_data["perplexities"][str(c)] = float(ppl)
 
     save_summary(output_dir, summary_data)
     release_memory(force=True)
