@@ -163,14 +163,15 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                         c2 = high - (high - low) / 3
                         
                         # Evaluate at c1
+                        
                         res_search1 = evaluator.evaluate_dataset(train_data[180:], system_prompt=ADVANCE_PROMPTS[country], 
-                                                         steering_vector=vec, coeff=c1)
+                                                         steering_configs=[{"vector": vec, "coeff": c1, "layer_ids": best_layers}])
                         s_search1 = evaluator.aggregate_cultural_scores(res_search1, analyzer=analyzer)
                         dist1 = np.sqrt((s_search1['X_Axis'] - target_rc1)**2 + (s_search1['Y_Axis'] - target_rc2)**2)
                         
                         # Evaluate at c2
                         res_search2 = evaluator.evaluate_dataset(train_data[180:], system_prompt=ADVANCE_PROMPTS[country], 
-                                                         steering_vector=vec, coeff=c2)
+                                                         steering_configs=[{"vector": vec, "coeff": c2, "layer_ids": best_layers}])
                         s_search2 = evaluator.aggregate_cultural_scores(res_search2, analyzer=analyzer)
                         dist2 = np.sqrt((s_search2['X_Axis'] - target_rc1)**2 + (s_search2['Y_Axis'] - target_rc2)**2)
                         
@@ -224,7 +225,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                 print(f"[{country}] Final Evaluation (Test Data)... Vector: {vec_name}, Coeff: {coeff}{label_suffix}")
                 
                 res_comb = evaluator.evaluate_dataset(test_data, system_prompt=ADVANCE_PROMPTS[country], 
-                                                steering_vector=vec, coeff=coeff)
+                                                steering_configs=[{"vector": vec, "coeff": coeff, "layer_ids": best_layers}])
                 save_detailed(output_dir, f"vector_{country}_{vec_name}_{coeff}_mlt", res_comb)
                 s_comb = evaluator.aggregate_cultural_scores(res_comb, analyzer=analyzer)
                 summary_data["vectors"].append({
