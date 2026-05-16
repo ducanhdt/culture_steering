@@ -299,16 +299,16 @@ Use [notebooks/domain_analysis.ipynb](notebooks/domain_analysis.ipynb) to inspec
 
 | ID | Dimension | Concept |
 |----|-----------|---------|
-| F063 | X | Importance of God |
-| Y003 | X | Autonomy Index (Child values) |
-| F120 | X | Justifiability of Abortion |
-| G006 | X | National Pride |
-| E018 | X | Respect for Authority |
-| A008 | Y | Happiness |
-| A165 | Y | Trust in People |
-| E025 | Y | Petition Signing |
-| F118 | Y | Justifiability of Homosexuality |
-| Y002 | Y | Security vs. Expression Priority |
+| A008 | X | Happiness |
+| A165 | X | Trust in People |
+| E025 | X | Petition Signing |
+| F118 | X | Justifiability of Homosexuality |
+| Y002 | X | Security vs. Expression Priority |
+| F063 | Y | Importance of God |
+| Y003 | Y | Autonomy Index (Child values) |
+| F120 | Y | Justifiability of Abortion |
+| G006 | Y | National Pride |
+| E018 | Y | Respect for Authority |
 
 
 ## Troubleshooting
