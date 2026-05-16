@@ -6,7 +6,7 @@ import numpy as np
 # Update these paths to the actual location of your .sav files
 WVS_PATH = "wvs_evs_trend/Trends_VS_1981_2022_sav_v4_0.sav"
 EVS_PATH2 = "data/ZA7503_v3-0-0.dta/ZA7503_v3-0-0.dta"
-OUTPUT_PATH = "wvs_evs_trend/ivs_data.pkl"
+OUTPUT_PATH = "../wvs_evs_trend/ivs_data_processed.pkl"
 
 def load_spss_file(path):
     """Loads an SPSS file and returns a pandas DataFrame."""
@@ -184,10 +184,10 @@ final_df = combined_df
 
 print(f"Final dataset shape after keeping specified variables: {final_df.shape}")
 print(f"Saving merged file to {OUTPUT_PATH}...")
-final_df.to_pickle(OUTPUT_PATH)
+# final_df.to_pickle(OUTPUT_PATH)
 
 
-
+# process data for IVS culture map
 meta_col = ["S020", "S003"]
 # Weights
 weights = ["S017"]
@@ -215,4 +215,4 @@ ivs_data = ivs_data.dropna(subset=iv_qns, how='any')
 
 print(f"IVS countries: {ivs_data['s003'].nunique()}")
 # save processed ivs_data to pkl
-ivs_data.to_pickle("../wvs_evs_trend/ivs_data_processed.pkl")
+ivs_data.to_pickle(OUTPUT_PATH)

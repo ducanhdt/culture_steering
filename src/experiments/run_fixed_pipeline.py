@@ -14,7 +14,7 @@ from src.core.config import (
 from src.utils.data_utils import WVSAnalyzer
 
 def save_summary(output_dir, summary_data):
-    with open(f"{output_dir}/summary_results.json", "w") as f:
+    with open(f"{output_dir}/summary_results_fixed_pipeline.json", "w") as f:
         json.dump(summary_data, f, indent=4)
 
 def save_detailed(output_dir, name, results):

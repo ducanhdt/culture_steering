@@ -6,7 +6,7 @@ import pickle
 import os
 
 class WVSAnalyzer:
-    def __init__(self, ivs_data_path="wvs_evs_trend/ivs_data_processed.pkl", country_code_path="data/country_codes.pkl"):
+    def __init__(self, ivs_data_path="wvs_evs_trend/ivs_data_processed.pkl", country_code_path="data/s003.csv"):
         self.iv_qns = ["A008", "A165", "E018", "E025", "F063", "F118", "F120", "G006", "Y002", "Y003"]
         self.ivs_data = pd.read_pickle(ivs_data_path)
         
@@ -38,9 +38,9 @@ class WVSAnalyzer:
         #     self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
         # else:
             # Fallback if pickle doesn't exist
-        csv_path = "data/s003.csv"
-        if os.path.exists(csv_path):
-            country_codes = pd.read_csv(csv_path)
+        country_code_path = "data/s003.csv"
+        if os.path.exists(country_code_path):
+            country_codes = pd.read_csv(country_code_path)
             # s003.csv columns: "s003","country.territory","Category"
             self.country_means = self.country_means.merge(country_codes, on='s003', how='left')
 
