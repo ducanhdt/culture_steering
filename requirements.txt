@@ -20,12 +20,5 @@ pyreadstat
 langdetect
 
 # Package Dependencies
--e ./dialz_raw
-
-# Documentation Dependencies (from dialz_raw)
-furo==2024.8.6
-myst-nb
-sphinx
-sphinx-autodoc-typehints
-sphinx-copybutton
-ipython==8.37.0
+# dialz is not on PyPI; install separately:
+#   pip install git+https://github.com/ducanhdt/dialz

@@ -1,5 +1,6 @@
 
 import torch
+from transformers import AutoConfig
 
 # Dimension IDs
 X_AXIS_ID = ["F063", 'Y003', 'F120', 'G006', 'E018']  # Traditional vs Secular-rational
@@ -20,14 +21,22 @@ else:
     DEVICE = "cpu"
 
 def get_num_layers(model_name):
-    model_name_lower = model_name.lower()
-    if 'qwen' in model_name_lower:
+    """Reads the actual transformer depth from the model's HF config.
+
+    Falls back to family-based guesses (only correct for the original
+    3-4B models) if the config can't be fetched, e.g. offline.
+    """
+    try:
+        return AutoConfig.from_pretrained(model_name).num_hidden_layers
+    except Exception:
+        model_name_lower = model_name.lower()
+        if 'qwen' in model_name_lower:
+            return 28
+        elif 'llama' in model_name_lower:
+            return 28
+        elif 'gemma' in model_name_lower:
+            return 34
         return 28
-    elif 'llama' in model_name_lower:
-        return 28
-    elif 'gemma' in model_name_lower:
-        return 34
-    return 28
 
 # Language specific question endings
 QUESTION_ENDINGS = {
