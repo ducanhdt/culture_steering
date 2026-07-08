@@ -110,7 +110,7 @@ def run_paper_experiments(model_name=DEFAULT_MODEL,
                 layer_avg[layer_id] = layer_avg.get(layer_id, 0) + diff
         best_layers = sorted(layer_avg, key=layer_avg.get, reverse=True)
         print(f"Top layers for steering: {best_layers[:10]}")
-        best_layers = sorted(best_layers)[:4]  # Select top 4 layers
+        best_layers = sorted(best_layers[:4])  # Select top 4 layers by diff, then order numerically
         # save best_layers to summary
         summary_data["best_layers"] = best_layers
     evaluator.model.layer_ids = best_layers
